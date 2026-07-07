@@ -1,6 +1,11 @@
 <Solution>
-  <Project Path="TuCita.Api/TuCita.Api.csproj" />
-  <Project Path="TuCita.Application/TuCita.Application.csproj" />
-  <Project Path="TuCita.Domain/TuCita.Domain.csproj" />
-  <Project Path="TuCita.Infraestructure/TuCita.Infraestructure.csproj" />
+  <Folder Name="/src/">
+    <Project Path="src/TuCita.Api/TuCita.Api.csproj" />
+    <Project Path="src/TuCita.Application/TuCita.Application.csproj" />
+    <Project Path="src/TuCita.Domain/TuCita.Domain.csproj" />
+    <Project Path="src/TuCita.Infrastructure/TuCita.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TuCita.Domain.UnitTests/TuCita.Domain.UnitTests.csproj" />
+  </Folder>
 </Solution>
