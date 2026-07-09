@@ -1,0 +1,93 @@
+using FluentAssertions;
+using TuCita.Domain.Entities;
+using TuCita.Domain.Enums;
+using TuCita.Domain.Identifiers;
+using TuCita.Domain.UnitTests.TestData;
+using TuCita.Domain.ValueObjects;
+
+namespace TuCita.Domain.UnitTests.Entities;
+
+public class ProfessionalTests
+{
+    [Fact]
+    public void Constructor_ShouldCreateProfessional_WhenDataIsValid()
+    {
+        // Arrange & Act
+        var professional = ProfessionalTestData.Create();
+
+        // Assert
+        professional.Should().NotBeNull();
+        professional.FullName.Should().Be("Wander Genao");
+        professional.IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Constructor_ShouldThrowException_WhenNameIsEmpty()
+    {
+        // Arrange
+        var id = new ProfessionalId("professional-001");
+
+        // Act
+        Action action = () => new Professional(
+            id,
+            "",
+            Email.Create("wander@email.com"),
+            PhoneNumber.Create("8095551234"),
+            Slug.Create("wander-genao"),
+            Category.Barber,
+            AppointmentDuration.Create(30),
+            ProfessionalTestData.CreateWorkingSchedule());
+
+        // Assert
+        action.Should()
+            .Throw<ArgumentException>()
+            .WithMessage("*nombre*");
+    }
+
+    [Fact]
+    public void Constructor_ShouldThrowException_WhenIdIsNull()
+    {
+        // Act
+        Action action = () => new Professional(
+            null!,
+            "Wander Genao",
+            Email.Create("wander@email.com"),
+            PhoneNumber.Create("8095551234"),
+            Slug.Create("wander-genao"),
+            Category.Barber,
+            AppointmentDuration.Create(30),
+            ProfessionalTestData.CreateWorkingSchedule());
+
+        // Assert
+        action.Should()
+            .Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Constructor_ShouldInitializeProfessionalAsActive()
+    {
+        // Arrange & Act
+        var professional = ProfessionalTestData.Create();
+
+        // Assert
+        professional.IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Constructor_ShouldTrimName_WhenNameContainsLeadingOrTrailingSpaces()
+    {
+        // Arrange & Act
+        var professional = new Professional(
+            new ProfessionalId("professional-001"),
+            "   Wander Genao   ",
+            Email.Create("wander@email.com"),
+            PhoneNumber.Create("8095551234"),
+            Slug.Create("wander-genao"),
+            Category.Barber,
+            AppointmentDuration.Create(30),
+            ProfessionalTestData.CreateWorkingSchedule());
+
+        // Assert
+        professional.FullName.Should().Be("Wander Genao");
+    }
+}
