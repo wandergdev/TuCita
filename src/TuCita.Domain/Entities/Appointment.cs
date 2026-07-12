@@ -23,7 +23,7 @@ public class Appointment
     public AppointmentStatus Status { get; private set; }
 
     public DateTime CreatedAt { get; private set; }
-    
+
     /// <summary>
     /// Crea una nueva cita.
     /// Una cita siempre debe pertenecer a un profesional y contener
@@ -38,22 +38,15 @@ public class Appointment
         TimeOnly startTime,
         TimeOnly endTime)
     {
-        // Un Appointment nunca puede existir sin un identificador.
         ArgumentNullException.ThrowIfNull(id);
-
-        // Toda cita debe pertenecer a un profesional.
         ArgumentNullException.ThrowIfNull(professionalId);
-
-        // El teléfono del cliente es obligatorio.
         ArgumentNullException.ThrowIfNull(customerPhone);
 
-        // El nombre del cliente es obligatorio.
         if (string.IsNullOrWhiteSpace(customerName))
             throw new ArgumentException(
                 "El nombre del cliente es obligatorio.",
                 nameof(customerName));
 
-        // La hora de inicio debe ser menor que la hora de fin.
         if (startTime >= endTime)
             throw new ArgumentException(
                 "La hora de inicio debe ser menor que la hora de fin.");
@@ -66,10 +59,43 @@ public class Appointment
         StartTime = startTime;
         EndTime = endTime;
 
-        // Toda cita inicia como programada.
         Status = AppointmentStatus.Scheduled;
-
-        // Fecha de creación de la cita.
         CreatedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Cancela una cita previamente programada.
+    /// </summary>
+    public void Cancel()
+    {
+        if (Status != AppointmentStatus.Scheduled)
+            throw new InvalidOperationException(
+                "Solo una cita programada puede cancelarse.");
+
+        Status = AppointmentStatus.Cancelled;
+    }
+
+    /// <summary>
+    /// Marca una cita como completada.
+    /// </summary>
+    public void Complete()
+    {
+        if (Status != AppointmentStatus.Scheduled)
+            throw new InvalidOperationException(
+                "Solo una cita programada puede completarse.");
+
+        Status = AppointmentStatus.Completed;
+    }
+
+    /// <summary>
+    /// Marca una cita como ausencia del cliente.
+    /// </summary>
+    public void MarkAsNoShow()
+    {
+        if (Status != AppointmentStatus.Scheduled)
+            throw new InvalidOperationException(
+                "Solo una cita programada puede marcarse como No Show.");
+
+        Status = AppointmentStatus.NoShow;
     }
 }

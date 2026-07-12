@@ -151,4 +151,79 @@ public class AppointmentTests
         // Assert
         appointment.CustomerName.Should().Be("Juan Pérez");
     }
+    
+    [Fact]
+    public void Cancel_ShouldChangeStatusToCancelled()
+    {
+        // Arrange
+        var appointment = AppointmentTestData.Create();
+
+        // Act
+        appointment.Cancel();
+
+        // Assert
+        appointment.Status.Should().Be(AppointmentStatus.Cancelled);
+    }
+
+    [Fact]
+    public void Complete_ShouldChangeStatusToCompleted()
+    {
+        // Arrange
+        var appointment = AppointmentTestData.Create();
+
+        // Act
+        appointment.Complete();
+
+        // Assert
+        appointment.Status.Should().Be(AppointmentStatus.Completed);
+    }
+
+    [Fact]
+    public void MarkAsNoShow_ShouldChangeStatusToNoShow()
+    {
+        // Arrange
+        var appointment = AppointmentTestData.Create();
+
+        // Act
+        appointment.MarkAsNoShow();
+
+        // Assert
+        appointment.Status.Should().Be(AppointmentStatus.NoShow);
+    }
+    
+    [Fact]
+    public void Cancel_ShouldThrowException_WhenAppointmentIsAlreadyCancelled()
+    {
+        var appointment = AppointmentTestData.Create();
+
+        appointment.Cancel();
+
+        Action action = appointment.Cancel;
+
+        action.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void Complete_ShouldThrowException_WhenAppointmentIsCancelled()
+    {
+        var appointment = AppointmentTestData.Create();
+
+        appointment.Cancel();
+
+        Action action = appointment.Complete;
+
+        action.Should().Throw<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void MarkAsNoShow_ShouldThrowException_WhenAppointmentIsCompleted()
+    {
+        var appointment = AppointmentTestData.Create();
+
+        appointment.Complete();
+
+        Action action = appointment.MarkAsNoShow;
+
+        action.Should().Throw<InvalidOperationException>();
+    }
 }
