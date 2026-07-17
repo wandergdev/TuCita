@@ -28,7 +28,7 @@ public class ProfessionalTests
         var id = new ProfessionalId("professional-001");
 
         // Act
-        Action action = () => new Professional(
+        Action action = () => Professional.Create(
             id,
             "",
             Email.Create("wander@email.com"),
@@ -48,7 +48,7 @@ public class ProfessionalTests
     public void Constructor_ShouldThrowException_WhenIdIsNull()
     {
         // Act
-        Action action = () => new Professional(
+        Action action = () => Professional.Create(
             null!,
             "Wander Genao",
             Email.Create("wander@email.com"),
@@ -77,7 +77,7 @@ public class ProfessionalTests
     public void Constructor_ShouldTrimName_WhenNameContainsLeadingOrTrailingSpaces()
     {
         // Arrange & Act
-        var professional = new Professional(
+        var professional = Professional.Create(
             new ProfessionalId("professional-001"),
             "   Wander Genao   ",
             Email.Create("wander@email.com"),

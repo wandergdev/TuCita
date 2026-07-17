@@ -24,7 +24,7 @@ public class AppointmentTests
     public void Constructor_ShouldThrowException_WhenIdIsNull()
     {
         // Arrange & Act
-        Action action = () => new Appointment(
+        Action action = () =>  Appointment.Create(
             null!,
             new ProfessionalId("professional-001"),
             "Juan Pérez",
@@ -41,7 +41,7 @@ public class AppointmentTests
     public void Constructor_ShouldThrowException_WhenProfessionalIdIsNull()
     {
         // Arrange & Act
-        Action action = () => new Appointment(
+        Action action = () => Appointment.Create(
             new AppointmentId("appointment-001"),
             null!,
             "Juan Pérez",
@@ -58,7 +58,7 @@ public class AppointmentTests
     public void Constructor_ShouldThrowException_WhenCustomerNameIsEmpty()
     {
         // Arrange & Act
-        Action action = () => new Appointment(
+        Action action = () =>  Appointment.Create(
             new AppointmentId("appointment-001"),
             new ProfessionalId("professional-001"),
             "",
@@ -77,7 +77,7 @@ public class AppointmentTests
     public void Constructor_ShouldThrowException_WhenCustomerPhoneIsNull()
     {
         // Arrange & Act
-        Action action = () => new Appointment(
+        Action action = () => Appointment.Create(
             new AppointmentId("appointment-001"),
             new ProfessionalId("professional-001"),
             "Juan Pérez",
@@ -94,7 +94,7 @@ public class AppointmentTests
     public void Constructor_ShouldThrowException_WhenStartTimeIsGreaterThanEndTime()
     {
         // Arrange & Act
-        Action action = () => new Appointment(
+        Action action = () => Appointment.Create(
             new AppointmentId("appointment-001"),
             new ProfessionalId("professional-001"),
             "Juan Pérez",
@@ -139,7 +139,7 @@ public class AppointmentTests
     public void Constructor_ShouldTrimCustomerName()
     {
         // Arrange & Act
-        var appointment = new Appointment(
+        var appointment = Appointment.Create(
             new AppointmentId("appointment-001"),
             new ProfessionalId("professional-001"),
             "   Juan Pérez   ",

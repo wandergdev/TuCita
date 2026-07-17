@@ -29,7 +29,7 @@ public class Appointment
     /// Una cita siempre debe pertenecer a un profesional y contener
     /// toda la información necesaria para poder ser agendada.
     /// </summary>
-    public Appointment(
+    private Appointment(
         AppointmentId id,
         ProfessionalId professionalId,
         string customerName,
@@ -97,5 +97,24 @@ public class Appointment
                 "Solo una cita programada puede marcarse como No Show.");
 
         Status = AppointmentStatus.NoShow;
+    }
+    
+    public static Appointment Create(
+        AppointmentId id,
+        ProfessionalId professionalId,
+        string customerName,
+        PhoneNumber customerPhone,
+        DateOnly date,
+        TimeOnly startTime,
+        TimeOnly endTime)
+    {
+        return new Appointment(
+            id,
+            professionalId,
+            customerName,
+            customerPhone,
+            date,
+            startTime,
+            endTime);
     }
 }

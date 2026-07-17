@@ -14,7 +14,7 @@ public static class ProfessionalTestData
 {
     public static Professional Create()
     {
-        return new Professional(
+        return  Professional.Create(
             new ProfessionalId("professional-001"),
             "Wander Genao",
             Email.Create("wander@email.com"),

@@ -50,7 +50,7 @@ public sealed class Professional : Entity<ProfessionalId>
     /// </summary>
     public bool IsActive { get; private set; }
 
-    public Professional(
+    private Professional(
         ProfessionalId id,
         string fullName,
         Email email,
@@ -78,5 +78,26 @@ public sealed class Professional : Entity<ProfessionalId>
         
         
         IsActive = true;
+    }
+    
+    public static Professional Create(
+        ProfessionalId id,
+        string fullName,
+        Email email,
+        PhoneNumber phoneNumber,
+        Slug slug,
+        Category category,
+        AppointmentDuration appointmentDuration,
+        WorkingSchedule workingSchedule)
+    {
+        return new Professional(
+            id,
+            fullName,
+            email,
+            phoneNumber,
+            slug,
+            category,
+            appointmentDuration,
+            workingSchedule);
     }
 }

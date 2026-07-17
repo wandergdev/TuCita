@@ -8,7 +8,7 @@ public static class AppointmentTestData
 {
     public static Appointment Create()
     {
-        return new Appointment(
+        return  Appointment.Create(
             new AppointmentId("appointment-001"),
             new ProfessionalId("professional-001"),
             "Juan Pérez",
