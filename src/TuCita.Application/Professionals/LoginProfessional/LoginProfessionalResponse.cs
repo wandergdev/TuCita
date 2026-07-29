@@ -7,4 +7,5 @@ namespace TuCita.Application.Professionals.LoginProfessional;
 /// </summary>
 public sealed record LoginProfessionalResponse(
     string Token,
-    ProfessionalId ProfessionalId);
+    ProfessionalId ProfessionalId,
+    string Slug);

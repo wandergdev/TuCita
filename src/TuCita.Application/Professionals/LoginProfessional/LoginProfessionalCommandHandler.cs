@@ -41,6 +41,6 @@ public sealed class LoginProfessionalCommandHandler
 
         var token = _authTokenGenerator.Generate(professional);
 
-        return new LoginProfessionalResponse(token, professional.Id);
+        return new LoginProfessionalResponse(token, professional.Id, professional.Slug.Value);
     }
 }

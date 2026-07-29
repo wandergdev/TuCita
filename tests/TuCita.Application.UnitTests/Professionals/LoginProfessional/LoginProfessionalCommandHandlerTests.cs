@@ -41,6 +41,7 @@ public class LoginProfessionalCommandHandlerTests
         // Assert
         response.Token.Should().Be("jwt-token");
         response.ProfessionalId.Should().Be(professional.Id);
+        response.Slug.Should().Be(professional.Slug.Value);
     }
 
     [Fact]

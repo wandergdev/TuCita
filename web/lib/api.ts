@@ -1,0 +1,179 @@
+import type {
+  AppointmentSummary,
+  ApiProblemDetails,
+  AuthSession,
+  BookAppointmentRequest,
+  LoginProfessionalRequest,
+  ProfessionalPublicProfile,
+  RegisterProfessionalRequest,
+} from "@/types/api";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5222";
+
+export class ApiError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+interface RawId {
+  value: string;
+}
+
+interface RawRegisterProfessionalResponse {
+  professionalId: RawId;
+}
+
+interface RawLoginProfessionalResponse {
+  token: string;
+  professionalId: RawId;
+  slug: string;
+}
+
+interface RawBookAppointmentResponse {
+  appointmentId: RawId;
+}
+
+interface RawAppointmentSummary extends Omit<AppointmentSummary, "id"> {
+  id: RawId;
+}
+
+interface RawGetProfessionalAppointmentsResponse {
+  appointments: RawAppointmentSummary[];
+}
+
+interface RawGetAvailabilityResponse {
+  availableSlots: string[];
+}
+
+interface ApiFetchOptions {
+  method?: "GET" | "POST";
+  body?: unknown;
+  token?: string | null;
+  cache?: RequestCache;
+}
+
+async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
+  const headers: Record<string, string> = {};
+  let payload: string | undefined;
+
+  if (options.body !== undefined) {
+    headers["Content-Type"] = "application/json";
+    payload = JSON.stringify(options.body);
+  }
+
+  if (options.token) {
+    headers.Authorization = `Bearer ${options.token}`;
+  }
+
+  const response = await fetch(`${API_URL}${path}`, {
+    method: options.method ?? "GET",
+    headers,
+    body: payload,
+    cache: options.cache ?? "no-store",
+  });
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const isJson = response.headers.get("content-type")?.includes("application/json") ?? false;
+  const data = isJson ? await response.json() : undefined;
+
+  if (!response.ok) {
+    const problem = data as ApiProblemDetails | undefined;
+    throw new ApiError(
+      response.status,
+      problem?.detail ?? problem?.title ?? "Ocurrió un error inesperado.",
+    );
+  }
+
+  return data as T;
+}
+
+export async function registerProfessional(payload: RegisterProfessionalRequest): Promise<string> {
+  const response = await apiFetch<RawRegisterProfessionalResponse>("/api/professionals/register", {
+    method: "POST",
+    body: payload,
+  });
+  return response.professionalId.value;
+}
+
+export async function loginProfessional(payload: LoginProfessionalRequest): Promise<AuthSession> {
+  const response = await apiFetch<RawLoginProfessionalResponse>("/api/professionals/login", {
+    method: "POST",
+    body: payload,
+  });
+  return {
+    token: response.token,
+    professionalId: response.professionalId.value,
+    slug: response.slug,
+  };
+}
+
+export async function getProfessionalProfile(slug: string): Promise<ProfessionalPublicProfile | null> {
+  try {
+    return await apiFetch<ProfessionalPublicProfile>(`/api/professionals/${encodeURIComponent(slug)}`);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
+}
+
+export async function getAvailability(slug: string, date: string): Promise<string[]> {
+  const response = await apiFetch<RawGetAvailabilityResponse>(
+    `/api/professionals/${encodeURIComponent(slug)}/availability?date=${date}`,
+  );
+  return response.availableSlots;
+}
+
+export async function bookAppointment(
+  slug: string,
+  payload: BookAppointmentRequest,
+): Promise<string> {
+  const response = await apiFetch<RawBookAppointmentResponse>(
+    `/api/professionals/${encodeURIComponent(slug)}/appointments`,
+    { method: "POST", body: payload },
+  );
+  return response.appointmentId.value;
+}
+
+export async function getMyAppointments(
+  token: string,
+  date?: string,
+): Promise<AppointmentSummary[]> {
+  const query = date ? `?date=${date}` : "";
+  const response = await apiFetch<RawGetProfessionalAppointmentsResponse>(
+    `/api/appointments/mine${query}`,
+    { token },
+  );
+  return response.appointments.map((appointment) => ({
+    ...appointment,
+    id: appointment.id.value,
+  }));
+}
+
+export async function completeAppointment(token: string, id: string): Promise<void> {
+  await apiFetch<void>(`/api/appointments/${encodeURIComponent(id)}/complete`, {
+    method: "POST",
+    token,
+  });
+}
+
+export async function cancelAppointment(token: string, id: string): Promise<void> {
+  await apiFetch<void>(`/api/appointments/${encodeURIComponent(id)}/cancel`, {
+    method: "POST",
+    token,
+  });
+}
+
+export async function markAppointmentAsNoShow(token: string, id: string): Promise<void> {
+  await apiFetch<void>(`/api/appointments/${encodeURIComponent(id)}/no-show`, {
+    method: "POST",
+    token,
+  });
+}
