@@ -14,4 +14,5 @@ public sealed record RegisterProfessionalCommand(
     string Slug,
     Category Category,
     int AppointmentDuration,
-    WorkingSchedule WorkingSchedule);
+    WorkingSchedule WorkingSchedule,
+    string Password);

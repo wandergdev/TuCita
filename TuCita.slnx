@@ -6,6 +6,7 @@
     <Project Path="src/TuCita.Infrastructure/TuCita.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/TuCita.Application.UnitTests/TuCita.Application.UnitTests.csproj" />
     <Project Path="tests/TuCita.Domain.UnitTests/TuCita.Domain.UnitTests.csproj" />
   </Folder>
 </Solution>

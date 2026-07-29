@@ -50,6 +50,11 @@ public sealed class Professional : Entity<ProfessionalId>
     /// </summary>
     public bool IsActive { get; private set; }
 
+    /// <summary>
+    /// Hash de la contraseña utilizada para autenticarse en el panel.
+    /// </summary>
+    public string PasswordHash { get; private set; }
+
     private Professional(
         ProfessionalId id,
         string fullName,
@@ -58,10 +63,11 @@ public sealed class Professional : Entity<ProfessionalId>
         Slug slug,
         Category category,
         AppointmentDuration appointmentDuration,
-        WorkingSchedule workingSchedule)
+        WorkingSchedule workingSchedule,
+        string passwordHash)
     {
         Id = id ?? throw new ArgumentNullException(nameof(id));
-        
+
         if (string.IsNullOrWhiteSpace(fullName))
             throw new ArgumentException("El nombre del profesional es obligatorio.", nameof(fullName));
         FullName = fullName.Trim();
@@ -73,13 +79,15 @@ public sealed class Professional : Entity<ProfessionalId>
             ?? throw new ArgumentNullException(nameof(appointmentDuration));
         WorkingSchedule = workingSchedule
             ?? throw new ArgumentNullException(nameof(workingSchedule));
-        
-        // Thodo profesional inicia activo al momento de registrarse
-        
-        
+
+        if (string.IsNullOrWhiteSpace(passwordHash))
+            throw new ArgumentException("El hash de la contraseña es obligatorio.", nameof(passwordHash));
+        PasswordHash = passwordHash;
+
+        // Todo profesional inicia activo al momento de registrarse
         IsActive = true;
     }
-    
+
     public static Professional Create(
         ProfessionalId id,
         string fullName,
@@ -88,7 +96,8 @@ public sealed class Professional : Entity<ProfessionalId>
         Slug slug,
         Category category,
         AppointmentDuration appointmentDuration,
-        WorkingSchedule workingSchedule)
+        WorkingSchedule workingSchedule,
+        string passwordHash)
     {
         return new Professional(
             id,
@@ -98,6 +107,7 @@ public sealed class Professional : Entity<ProfessionalId>
             slug,
             category,
             appointmentDuration,
-            workingSchedule);
+            workingSchedule,
+            passwordHash);
     }
 }

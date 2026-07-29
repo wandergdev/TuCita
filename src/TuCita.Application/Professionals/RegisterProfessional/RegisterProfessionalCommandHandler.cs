@@ -13,15 +13,19 @@ public sealed class RegisterProfessionalCommandHandler
 {
     private readonly IProfessionalRepository _professionalRepository;
     private readonly IIdentifierGenerator _identifierGenerator;
+    private readonly IPasswordHasher _passwordHasher;
 
     public RegisterProfessionalCommandHandler(
         IProfessionalRepository professionalRepository,
-        IIdentifierGenerator identifierGenerator)
+        IIdentifierGenerator identifierGenerator,
+        IPasswordHasher passwordHasher)
     {
         _professionalRepository = professionalRepository
                                   ?? throw new ArgumentNullException(nameof(professionalRepository));
         _identifierGenerator = identifierGenerator
             ?? throw new ArgumentNullException(nameof(identifierGenerator));
+        _passwordHasher = passwordHasher
+            ?? throw new ArgumentNullException(nameof(passwordHasher));
     }
 
     public async Task<RegisterProfessionalResponse> HandleAsync(
@@ -48,7 +52,8 @@ public sealed class RegisterProfessionalCommandHandler
             slug,
             command.Category,
             AppointmentDuration.Create(command.AppointmentDuration),
-            command.WorkingSchedule);
+            command.WorkingSchedule,
+            _passwordHasher.Hash(command.Password));
 
         await _professionalRepository.AddAsync(
             professional,

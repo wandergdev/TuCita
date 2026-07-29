@@ -36,7 +36,8 @@ public class ProfessionalTests
             Slug.Create("wander-genao"),
             Category.Barber,
             AppointmentDuration.Create(30),
-            ProfessionalTestData.CreateWorkingSchedule());
+            ProfessionalTestData.CreateWorkingSchedule(),
+            "hashed-password");
 
         // Assert
         action.Should()
@@ -56,7 +57,8 @@ public class ProfessionalTests
             Slug.Create("wander-genao"),
             Category.Barber,
             AppointmentDuration.Create(30),
-            ProfessionalTestData.CreateWorkingSchedule());
+            ProfessionalTestData.CreateWorkingSchedule(),
+            "hashed-password");
 
         // Assert
         action.Should()
@@ -85,9 +87,31 @@ public class ProfessionalTests
             Slug.Create("wander-genao"),
             Category.Barber,
             AppointmentDuration.Create(30),
-            ProfessionalTestData.CreateWorkingSchedule());
+            ProfessionalTestData.CreateWorkingSchedule(),
+            "hashed-password");
 
         // Assert
         professional.FullName.Should().Be("Wander Genao");
+    }
+
+    [Fact]
+    public void Constructor_ShouldThrowException_WhenPasswordHashIsEmpty()
+    {
+        // Act
+        Action action = () => Professional.Create(
+            new ProfessionalId("professional-001"),
+            "Wander Genao",
+            Email.Create("wander@email.com"),
+            PhoneNumber.Create("8095551234"),
+            Slug.Create("wander-genao"),
+            Category.Barber,
+            AppointmentDuration.Create(30),
+            ProfessionalTestData.CreateWorkingSchedule(),
+            "");
+
+        // Assert
+        action.Should()
+            .Throw<ArgumentException>()
+            .WithMessage("*contraseña*");
     }
 }

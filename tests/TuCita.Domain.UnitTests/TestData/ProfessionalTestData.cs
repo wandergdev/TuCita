@@ -22,7 +22,8 @@ public static class ProfessionalTestData
             Slug.Create("wander-genao"),
             Category.Barber,
             AppointmentDuration.Create(30),
-            CreateWorkingSchedule());
+            CreateWorkingSchedule(),
+            "hashed-password");
     }
 
     public static WorkingSchedule CreateWorkingSchedule()
