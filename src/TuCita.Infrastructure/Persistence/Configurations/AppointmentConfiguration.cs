@@ -54,6 +54,10 @@ public sealed class AppointmentConfiguration : IEntityTypeConfiguration<Appointm
             .HasColumnName("created_at")
             .IsRequired();
 
+        builder.Property(a => a.ReminderSentAt)
+            .HasColumnName("reminder_sent_at");
+
         builder.HasIndex(a => new { a.ProfessionalId, a.Date });
+        builder.HasIndex(a => new { a.ProfessionalId, a.Status, a.Date, a.StartTime });
     }
 }

@@ -14,7 +14,8 @@ public static class AvailabilitySlotCalculator
         WorkingSchedule workingSchedule,
         AppointmentDuration duration,
         DateOnly date,
-        IReadOnlyCollection<Appointment> existingAppointments)
+        IReadOnlyCollection<Appointment> existingAppointments,
+        DateTime now)
     {
         ArgumentNullException.ThrowIfNull(workingSchedule);
         ArgumentNullException.ThrowIfNull(duration);
@@ -25,19 +26,26 @@ public static class AvailabilitySlotCalculator
             return [];
 
         var slots = new List<TimeOnly>();
-        var step = TimeSpan.FromMinutes(duration.Minutes);
-        var slotStart = workingHours.StartTime;
+        var stepMinutes = duration.Minutes;
 
-        while (true)
+        // Se trabaja en minutos desde medianoche (enteros, sin "envolver")
+        // en vez de sumar TimeOnly directamente: TimeOnly.Add da vuelta al
+        // llegar a medianoche, lo que puede formar un ciclo que nunca
+        // cumple la condición de corte cuando la jornada termina cerca de
+        // las 00:00.
+        var startMinutes = ToMinutes(workingHours.StartTime);
+        var endMinutes = ToMinutes(workingHours.EndTime);
+
+        for (var minutes = startMinutes; minutes + stepMinutes <= endMinutes; minutes += stepMinutes)
         {
-            var slotEnd = slotStart.Add(step);
-            if (slotEnd > workingHours.EndTime)
-                break;
+            var slotStart = new TimeOnly(minutes / 60, minutes % 60);
+            var slotEnd = new TimeOnly((minutes + stepMinutes) / 60, (minutes + stepMinutes) % 60);
+
+            if (date.ToDateTime(slotStart) <= now)
+                continue;
 
             if (IsSlotAvailable(slotStart, slotEnd, existingAppointments))
                 slots.Add(slotStart);
-
-            slotStart = slotStart.Add(step);
         }
 
         return slots;
@@ -57,4 +65,6 @@ public static class AvailabilitySlotCalculator
 
     private static bool Overlaps(TimeOnly startA, TimeOnly endA, TimeOnly startB, TimeOnly endB)
         => startA < endB && startB < endA;
+
+    private static int ToMinutes(TimeOnly time) => time.Hour * 60 + time.Minute;
 }

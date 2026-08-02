@@ -1,3 +1,4 @@
+using TuCita.Application.Abstractions;
 using TuCita.Application.Common.Exceptions;
 using TuCita.Domain.Repositories;
 using TuCita.Domain.Services;
@@ -11,15 +12,19 @@ public sealed class GetAvailabilityQueryHandler
 {
     private readonly IProfessionalRepository _professionalRepository;
     private readonly IAppointmentRepository _appointmentRepository;
+    private readonly IDateTimeProvider _dateTimeProvider;
 
     public GetAvailabilityQueryHandler(
         IProfessionalRepository professionalRepository,
-        IAppointmentRepository appointmentRepository)
+        IAppointmentRepository appointmentRepository,
+        IDateTimeProvider dateTimeProvider)
     {
         _professionalRepository = professionalRepository
             ?? throw new ArgumentNullException(nameof(professionalRepository));
         _appointmentRepository = appointmentRepository
             ?? throw new ArgumentNullException(nameof(appointmentRepository));
+        _dateTimeProvider = dateTimeProvider
+            ?? throw new ArgumentNullException(nameof(dateTimeProvider));
     }
 
     public async Task<GetAvailabilityResponse> HandleAsync(
@@ -42,7 +47,8 @@ public sealed class GetAvailabilityQueryHandler
             professional.WorkingSchedule,
             professional.AppointmentDuration,
             query.Date,
-            existingAppointments);
+            existingAppointments,
+            _dateTimeProvider.Now);
 
         return new GetAvailabilityResponse(availableSlots);
     }

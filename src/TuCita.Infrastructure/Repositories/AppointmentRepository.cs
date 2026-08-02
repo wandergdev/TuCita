@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TuCita.Domain.Entities;
+using TuCita.Domain.Enums;
 using TuCita.Domain.Identifiers;
 using TuCita.Domain.Repositories;
 using TuCita.Infrastructure.Persistence;
@@ -22,10 +23,24 @@ public sealed class AppointmentRepository : IAppointmentRepository
 
     public async Task<IReadOnlyCollection<Appointment>> GetByProfessionalAsync(
         ProfessionalId professionalId,
+        AppointmentStatus? status,
+        bool ascending,
+        int skip,
+        int take,
         CancellationToken cancellationToken = default)
-        => await _dbContext.Appointments
-            .Where(a => a.ProfessionalId == professionalId)
-            .ToListAsync(cancellationToken);
+    {
+        var query = _dbContext.Appointments
+            .Where(a => a.ProfessionalId == professionalId);
+
+        if (status is { } requestedStatus)
+            query = query.Where(a => a.Status == requestedStatus);
+
+        query = ascending
+            ? query.OrderBy(a => a.Date).ThenBy(a => a.StartTime)
+            : query.OrderByDescending(a => a.Date).ThenByDescending(a => a.StartTime);
+
+        return await query.Skip(skip).Take(take).ToListAsync(cancellationToken);
+    }
 
     public async Task<IReadOnlyCollection<Appointment>> GetByProfessionalAndDateAsync(
         ProfessionalId professionalId,
@@ -33,6 +48,45 @@ public sealed class AppointmentRepository : IAppointmentRepository
         CancellationToken cancellationToken = default)
         => await _dbContext.Appointments
             .Where(a => a.ProfessionalId == professionalId && a.Date == date)
+            .ToListAsync(cancellationToken);
+
+    public async Task<AppointmentStatsResult> GetStatsByProfessionalAsync(
+        ProfessionalId professionalId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default)
+    {
+        var rangeQuery = _dbContext.Appointments
+            .Where(a => a.ProfessionalId == professionalId && a.Date >= from && a.Date <= to);
+
+        var statusCounts = await rangeQuery
+            .GroupBy(a => a.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        var distinctCustomers = await rangeQuery
+            .Where(a => a.Status == AppointmentStatus.Completed)
+            .Select(a => a.CustomerPhone)
+            .Distinct()
+            .CountAsync(cancellationToken);
+
+        int CountFor(AppointmentStatus status)
+            => statusCounts.FirstOrDefault(x => x.Status == status)?.Count ?? 0;
+
+        return new AppointmentStatsResult(
+            CountFor(AppointmentStatus.Completed),
+            CountFor(AppointmentStatus.NoShow),
+            CountFor(AppointmentStatus.Cancelled),
+            distinctCustomers);
+    }
+
+    public async Task<IReadOnlyCollection<Appointment>> GetPendingReminderCandidatesAsync(
+        DateOnly date,
+        CancellationToken cancellationToken = default)
+        => await _dbContext.Appointments
+            .Where(a => a.Date == date
+                && a.Status == AppointmentStatus.Scheduled
+                && a.ReminderSentAt == null)
             .ToListAsync(cancellationToken);
 
     public async Task AddAsync(

@@ -57,6 +57,22 @@ export interface AppointmentSummary {
   status: AppointmentStatus;
 }
 
+export interface AppointmentsPageResponse {
+  appointments: AppointmentSummary[];
+  hasMore: boolean;
+}
+
+export type StatsRange = "Day" | "Week" | "Month";
+
+export interface AppointmentStats {
+  completedCount: number;
+  noShowCount: number;
+  cancelledCount: number;
+  distinctCustomersCount: number;
+  from: string;
+  to: string;
+}
+
 export interface AuthSession {
   token: string;
   professionalId: string;

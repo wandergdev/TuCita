@@ -23,9 +23,9 @@ export function AppointmentCard({
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <div className="flex items-center gap-2">
-          <p className="font-medium text-foreground">{appointment.customerName}</p>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="break-words font-medium text-foreground">{appointment.customerName}</p>
           <Badge className={STATUS_BADGE_CLASSES[appointment.status]}>
             {STATUS_LABELS[appointment.status]}
           </Badge>

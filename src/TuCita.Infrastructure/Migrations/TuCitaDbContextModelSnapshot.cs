@@ -56,6 +56,10 @@ namespace TuCita.Infrastructure.Migrations
                         .HasColumnType("character varying(26)")
                         .HasColumnName("professional_id");
 
+                    b.Property<DateTime?>("ReminderSentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reminder_sent_at");
+
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time without time zone")
                         .HasColumnName("start_time");
@@ -68,6 +72,8 @@ namespace TuCita.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ProfessionalId", "Date");
+
+                    b.HasIndex("ProfessionalId", "Status", "Date", "StartTime");
 
                     b.ToTable("appointments", (string)null);
                 });

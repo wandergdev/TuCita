@@ -1,13 +1,17 @@
 using TuCita.Domain.Entities;
+using TuCita.Domain.Enums;
 using TuCita.Domain.Repositories;
 
 namespace TuCita.Application.Appointments.GetProfessionalAppointments;
 
 /// <summary>
-/// Obtiene las citas del profesional autenticado para su panel.
+/// Obtiene una página de citas del profesional autenticado para su panel.
 /// </summary>
 public sealed class GetProfessionalAppointmentsQueryHandler
 {
+    private const int DefaultPageSize = 50;
+    private const int MaxPageSize = 100;
+
     private readonly IAppointmentRepository _appointmentRepository;
 
     public GetProfessionalAppointmentsQueryHandler(IAppointmentRepository appointmentRepository)
@@ -22,11 +26,18 @@ public sealed class GetProfessionalAppointmentsQueryHandler
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var appointments = query.Date is { } date
-            ? await _appointmentRepository.GetByProfessionalAndDateAsync(query.ProfessionalId, date, cancellationToken)
-            : await _appointmentRepository.GetByProfessionalAsync(query.ProfessionalId, cancellationToken);
+        var skip = Math.Max(query.Skip, 0);
+        var take = query.Take <= 0 ? DefaultPageSize : Math.Min(query.Take, MaxPageSize);
+        var ascending = query.Status == AppointmentStatus.Scheduled;
 
-        return new GetProfessionalAppointmentsResponse(appointments.Select(ToSummary).ToList());
+        // Se pide una fila extra para saber si hay más páginas sin un COUNT(*) aparte.
+        var appointments = await _appointmentRepository.GetByProfessionalAsync(
+            query.ProfessionalId, query.Status, ascending, skip, take + 1, cancellationToken);
+
+        var hasMore = appointments.Count > take;
+        var page = appointments.Take(take).Select(ToSummary).ToList();
+
+        return new GetProfessionalAppointmentsResponse(page, hasMore);
     }
 
     private static AppointmentSummary ToSummary(Appointment appointment) => new(

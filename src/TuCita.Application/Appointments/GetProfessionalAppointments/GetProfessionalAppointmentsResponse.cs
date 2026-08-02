@@ -1,7 +1,8 @@
 namespace TuCita.Application.Appointments.GetProfessionalAppointments;
 
 /// <summary>
-/// Citas de un profesional para mostrar en su panel.
+/// Página de citas de un profesional para mostrar en su panel.
 /// </summary>
 public sealed record GetProfessionalAppointmentsResponse(
-    IReadOnlyCollection<AppointmentSummary> Appointments);
+    IReadOnlyCollection<AppointmentSummary> Appointments,
+    bool HasMore);

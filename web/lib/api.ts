@@ -1,11 +1,15 @@
 import type {
+  AppointmentStatus,
+  AppointmentStats,
   AppointmentSummary,
+  AppointmentsPageResponse,
   ApiProblemDetails,
   AuthSession,
   BookAppointmentRequest,
   LoginProfessionalRequest,
   ProfessionalPublicProfile,
   RegisterProfessionalRequest,
+  StatsRange,
 } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5222";
@@ -44,6 +48,7 @@ interface RawAppointmentSummary extends Omit<AppointmentSummary, "id"> {
 
 interface RawGetProfessionalAppointmentsResponse {
   appointments: RawAppointmentSummary[];
+  hasMore: boolean;
 }
 
 interface RawGetAvailabilityResponse {
@@ -144,17 +149,33 @@ export async function bookAppointment(
 
 export async function getMyAppointments(
   token: string,
-  date?: string,
-): Promise<AppointmentSummary[]> {
-  const query = date ? `?date=${date}` : "";
+  options: { status?: AppointmentStatus; skip?: number; take?: number } = {},
+): Promise<AppointmentsPageResponse> {
+  const params = new URLSearchParams();
+  if (options.status) params.set("status", options.status);
+  if (options.skip !== undefined) params.set("skip", String(options.skip));
+  if (options.take !== undefined) params.set("take", String(options.take));
+  const query = params.toString();
+
   const response = await apiFetch<RawGetProfessionalAppointmentsResponse>(
-    `/api/appointments/mine${query}`,
+    `/api/appointments/mine${query ? `?${query}` : ""}`,
     { token },
   );
-  return response.appointments.map((appointment) => ({
-    ...appointment,
-    id: appointment.id.value,
-  }));
+
+  return {
+    appointments: response.appointments.map((appointment) => ({
+      ...appointment,
+      id: appointment.id.value,
+    })),
+    hasMore: response.hasMore,
+  };
+}
+
+export async function getAppointmentStats(
+  token: string,
+  range: StatsRange,
+): Promise<AppointmentStats> {
+  return apiFetch<AppointmentStats>(`/api/appointments/stats?range=${range}`, { token });
 }
 
 export async function completeAppointment(token: string, id: string): Promise<void> {

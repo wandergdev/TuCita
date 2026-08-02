@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using TuCita.Application.Abstractions;
 using TuCita.Application.Appointments.BookAppointment;
@@ -17,15 +18,23 @@ public class BookAppointmentCommandHandlerTests
     private readonly Mock<IProfessionalRepository> _professionalRepository = new();
     private readonly Mock<IAppointmentRepository> _appointmentRepository = new();
     private readonly Mock<IIdentifierGenerator> _identifierGenerator = new();
+    private readonly Mock<IEmailSender> _emailSender = new();
+    private readonly Mock<IDateTimeProvider> _dateTimeProvider = new();
+    private readonly Mock<ILogger<BookAppointmentCommandHandler>> _logger = new();
     private readonly BookAppointmentCommandHandler _handler;
     private static readonly DateOnly Monday = new(2026, 8, 3);
 
     public BookAppointmentCommandHandlerTests()
     {
+        _dateTimeProvider.Setup(d => d.Now).Returns(Monday.ToDateTime(new TimeOnly(8, 30)));
+
         _handler = new BookAppointmentCommandHandler(
             _professionalRepository.Object,
             _appointmentRepository.Object,
-            _identifierGenerator.Object);
+            _identifierGenerator.Object,
+            _emailSender.Object,
+            _dateTimeProvider.Object,
+            _logger.Object);
     }
 
     private static BookAppointmentCommand CreateCommand(TimeOnly startTime) => new(
@@ -89,6 +98,22 @@ public class BookAppointmentCommandHandlerTests
     }
 
     [Fact]
+    public async Task HandleAsync_ShouldThrowException_WhenSlotAlreadyPassed()
+    {
+        // Arrange: "ahora" son las 8:30 (ver constructor), la cita solicitada es a las 8:00,
+        // dentro de la jornada laboral pero ya pasada.
+        var professional = ProfessionalTestData.Create();
+        _professionalRepository.Setup(r => r.GetBySlugAsync("wander-genao", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(professional);
+
+        // Act
+        var action = () => _handler.HandleAsync(CreateCommand(new TimeOnly(8, 0)));
+
+        // Assert
+        await action.Should().ThrowAsync<ArgumentException>();
+    }
+
+    [Fact]
     public async Task HandleAsync_ShouldThrowException_WhenSlotOverlapsExistingAppointment()
     {
         // Arrange
@@ -113,5 +138,31 @@ public class BookAppointmentCommandHandlerTests
 
         // Assert
         await action.Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
+    public async Task HandleAsync_ShouldStillBookAppointment_WhenEmailNotificationFails()
+    {
+        // Arrange
+        var professional = ProfessionalTestData.Create();
+        var appointmentId = new AppointmentId("appointment-001");
+
+        _professionalRepository.Setup(r => r.GetBySlugAsync("wander-genao", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(professional);
+        _appointmentRepository.Setup(r => r.GetByProfessionalAndDateAsync(
+                professional.Id, Monday, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyCollection<Appointment>)[]);
+        _identifierGenerator.Setup(g => g.NewAppointmentId()).Returns(appointmentId);
+        _emailSender
+            .Setup(e => e.SendAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("SMTP no disponible"));
+
+        // Act
+        var response = await _handler.HandleAsync(CreateCommand(new TimeOnly(9, 0)));
+
+        // Assert
+        response.AppointmentId.Should().Be(appointmentId);
+        _appointmentRepository.Verify(r => r.AddAsync(It.IsAny<Appointment>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

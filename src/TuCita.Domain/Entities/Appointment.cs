@@ -24,6 +24,8 @@ public class Appointment
 
     public DateTime CreatedAt { get; private set; }
 
+    public DateTime? ReminderSentAt { get; private set; }
+
     /// <summary>
     /// Crea una nueva cita.
     /// Una cita siempre debe pertenecer a un profesional y contener
@@ -98,7 +100,16 @@ public class Appointment
 
         Status = AppointmentStatus.NoShow;
     }
-    
+
+    /// <summary>
+    /// Registra que ya se envió el recordatorio de esta cita,
+    /// para no volver a enviarlo.
+    /// </summary>
+    public void MarkReminderSent(DateTime sentAt)
+    {
+        ReminderSentAt = sentAt;
+    }
+
     public static Appointment Create(
         AppointmentId id,
         ProfessionalId professionalId,

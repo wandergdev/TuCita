@@ -226,4 +226,18 @@ public class AppointmentTests
 
         action.Should().Throw<InvalidOperationException>();
     }
+
+    [Fact]
+    public void MarkReminderSent_ShouldSetReminderSentAt()
+    {
+        // Arrange
+        var appointment = AppointmentTestData.Create();
+        var sentAt = new DateTime(2026, 7, 15, 8, 40, 0);
+
+        // Act
+        appointment.MarkReminderSent(sentAt);
+
+        // Assert
+        appointment.ReminderSentAt.Should().Be(sentAt);
+    }
 }

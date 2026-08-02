@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Logging;
 using TuCita.Application.Abstractions;
+using TuCita.Application.Common;
 using TuCita.Application.Common.Exceptions;
 using TuCita.Domain.Entities;
 using TuCita.Domain.Repositories;
@@ -15,11 +17,17 @@ public sealed class BookAppointmentCommandHandler
     private readonly IProfessionalRepository _professionalRepository;
     private readonly IAppointmentRepository _appointmentRepository;
     private readonly IIdentifierGenerator _identifierGenerator;
+    private readonly IEmailSender _emailSender;
+    private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly ILogger<BookAppointmentCommandHandler> _logger;
 
     public BookAppointmentCommandHandler(
         IProfessionalRepository professionalRepository,
         IAppointmentRepository appointmentRepository,
-        IIdentifierGenerator identifierGenerator)
+        IIdentifierGenerator identifierGenerator,
+        IEmailSender emailSender,
+        IDateTimeProvider dateTimeProvider,
+        ILogger<BookAppointmentCommandHandler> logger)
     {
         _professionalRepository = professionalRepository
             ?? throw new ArgumentNullException(nameof(professionalRepository));
@@ -27,6 +35,11 @@ public sealed class BookAppointmentCommandHandler
             ?? throw new ArgumentNullException(nameof(appointmentRepository));
         _identifierGenerator = identifierGenerator
             ?? throw new ArgumentNullException(nameof(identifierGenerator));
+        _emailSender = emailSender
+            ?? throw new ArgumentNullException(nameof(emailSender));
+        _dateTimeProvider = dateTimeProvider
+            ?? throw new ArgumentNullException(nameof(dateTimeProvider));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<BookAppointmentResponse> HandleAsync(
@@ -49,6 +62,9 @@ public sealed class BookAppointmentCommandHandler
             || endTime > workingHours.EndTime)
             throw new ArgumentException("El horario seleccionado está fuera de la jornada laboral.");
 
+        if (command.Date.ToDateTime(command.StartTime) <= _dateTimeProvider.Now)
+            throw new ArgumentException("El horario seleccionado ya pasó.");
+
         var existingAppointments = await _appointmentRepository.GetByProfessionalAndDateAsync(
             professional.Id,
             command.Date,
@@ -68,6 +84,39 @@ public sealed class BookAppointmentCommandHandler
 
         await _appointmentRepository.AddAsync(appointment, cancellationToken);
 
+        await NotifyProfessionalAsync(professional, appointment, cancellationToken);
+
         return new BookAppointmentResponse(appointment.Id);
+    }
+
+    private async Task NotifyProfessionalAsync(
+        Professional professional,
+        Appointment appointment,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var (textBody, htmlBody) = EmailTemplates.NewAppointmentNotification(
+                appointment.CustomerName,
+                appointment.CustomerPhone.Value,
+                appointment.Date,
+                appointment.StartTime,
+                appointment.EndTime);
+
+            await _emailSender.SendAsync(
+                professional.Email.Value,
+                "Nueva cita reservada",
+                textBody,
+                htmlBody,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "No se pudo notificar por correo al profesional {ProfessionalId} sobre la cita {AppointmentId}",
+                professional.Id,
+                appointment.Id);
+        }
     }
 }

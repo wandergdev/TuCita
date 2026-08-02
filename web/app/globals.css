@@ -1,18 +1,42 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #1e293b;
-  --muted: #64748b;
-  --muted-background: #f8fafc;
-  --border: #e2e8f0;
+  --background: #f9f9f7;
+  --surface: #fcfcfb;
+  --foreground: #0b0b0b;
+  --muted: #52514e;
+  --muted-background: #f1f0ec;
+  --border: #e1e0d9;
   --accent: #0d9488;
   --accent-hover: #0f766e;
   --accent-foreground: #ffffff;
+
+  /* Section accents — two neighbors of the brand teal on the color wheel
+     (teal ~173°, aqua ~159°, blue ~213°), validated together for CVD/contrast. */
+  --cat-aqua: #1baf7a;
+  --cat-blue: #2a78d6;
+}
+
+.dark {
+  --background: #0d0d0d;
+  --surface: #1a1a19;
+  --foreground: #ffffff;
+  --muted: #c3c2b7;
+  --muted-background: #242422;
+  --border: #2c2c2a;
+  --accent: #2dd4bf;
+  --accent-hover: #5eead4;
+  --accent-foreground: #052e2b;
+
+  --cat-aqua: #199e70;
+  --cat-blue: #3987e5;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-muted-background: var(--muted-background);
@@ -20,6 +44,10 @@
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-foreground: var(--accent-foreground);
+
+  --color-cat-aqua: var(--cat-aqua);
+  --color-cat-blue: var(--cat-blue);
+
   --font-sans: var(--font-inter);
 }
 

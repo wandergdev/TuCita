@@ -15,10 +15,10 @@ export const STATUS_LABELS: Record<AppointmentStatus, string> = {
 };
 
 export const STATUS_BADGE_CLASSES: Record<AppointmentStatus, string> = {
-  Scheduled: "bg-blue-50 text-blue-700",
-  Completed: "bg-emerald-50 text-emerald-700",
-  Cancelled: "bg-slate-100 text-slate-500",
-  NoShow: "bg-amber-50 text-amber-700",
+  Scheduled: "bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
+  Completed: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  Cancelled: "bg-slate-100 text-slate-500 dark:bg-slate-500/15 dark:text-slate-300",
+  NoShow: "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
 };
 
 export const DAY_OPTIONS: { value: DayOfWeek; label: string }[] = [
