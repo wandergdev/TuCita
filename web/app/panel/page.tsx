@@ -8,6 +8,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Tabs } from "@/components/ui/Tabs";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { AppointmentCard } from "@/components/dashboard/AppointmentCard";
+import { ProfessionalHeader } from "@/components/dashboard/ProfessionalHeader";
 import { ShareLinkCard } from "@/components/dashboard/ShareLinkCard";
 import { StatsPanel } from "@/components/dashboard/StatsPanel";
 import { STATUS_LABELS } from "@/lib/labels";
@@ -152,7 +153,7 @@ export default function PanelPage() {
         </div>
 
         <div className="mt-6">
-          <ShareLinkCard slug={session.slug} />
+          <ProfessionalHeader slug={session.slug} />
         </div>
 
         <div className="mt-4">
@@ -192,6 +193,8 @@ export default function PanelPage() {
           </div>
         </div>
       </Container>
+
+      <ShareLinkCard slug={session.slug} />
     </main>
   );
 }

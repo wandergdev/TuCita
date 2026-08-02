@@ -1,10 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/cn";
 
 interface ShareLinkCardProps {
   slug: string;
+}
+
+function LinkIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-5 w-5"
+    >
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+    </svg>
+  );
 }
 
 export function ShareLinkCard({ slug }: ShareLinkCardProps) {
@@ -21,24 +38,32 @@ export function ShareLinkCard({ slug }: ShareLinkCardProps) {
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      setTimeout(() => setCopied(false), 1600);
     } catch {
-      // Clipboard API no disponible; el enlace sigue visible para copiar a mano.
+      // Clipboard API no disponible; no hay mucho más que ofrecer sin el enlace visible.
     }
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-accent/25 bg-accent/8 p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 shrink-0 rounded-full bg-accent" aria-hidden />
-          <p className="text-sm font-medium text-foreground">Tu enlace de reservas</p>
-        </div>
-        <p className="mt-1 truncate pl-4 text-sm text-muted">{url}</p>
-      </div>
-      <Button type="button" variant="outline" onClick={handleCopy} className="shrink-0 bg-surface">
-        {copied ? "¡Copiado!" : "Copiar enlace"}
-      </Button>
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+      <span
+        role="status"
+        className={cn(
+          "rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background shadow-sm transition-opacity",
+          copied ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+      >
+        ¡Enlace copiado!
+      </span>
+      <button
+        type="button"
+        onClick={handleCopy}
+        aria-label="Copiar enlace de reservas"
+        title="Copiar enlace de reservas"
+        className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-lg transition-transform hover:scale-105 hover:bg-accent-hover active:scale-95"
+      >
+        <LinkIcon />
+      </button>
     </div>
   );
 }
