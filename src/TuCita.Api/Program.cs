@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using TuCita.Api.Endpoints;
@@ -10,6 +11,22 @@ using TuCita.Infrastructure.DependencyInjection;
 using TuCita.Infrastructure.Options;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Render (y la mayoría de PaaS) asignan el puerto en runtime vía $PORT y
+// terminan TLS en su propio proxy, reenviando tráfico plano al contenedor.
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(port))
+{
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+}
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // El proxy de Render no tiene una IP fija conocida de antemano.
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 builder.Services.AddOpenApi();
 
@@ -59,6 +76,8 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 app.UseExceptionHandler();
 
