@@ -103,12 +103,18 @@ public sealed class BookAppointmentCommandHandler
                 appointment.StartTime,
                 appointment.EndTime);
 
+            // Un envío de correo colgado (ej. una conexión SMTP que nunca
+            // responde) no debe bloquear indefinidamente la respuesta de la
+            // reserva; el cliente ya la completó exitosamente en ese punto.
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(8));
+
             await _emailSender.SendAsync(
                 professional.Email.Value,
                 "Nueva cita reservada",
                 textBody,
                 htmlBody,
-                cancellationToken);
+                timeoutCts.Token);
         }
         catch (Exception ex)
         {

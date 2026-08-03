@@ -49,7 +49,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, InputHTMLAttributes<HT
           ref={ref}
           type={visible ? "text" : "password"}
           className={cn(
-            "w-full rounded-md border border-border bg-surface px-3 py-2 pr-10 text-sm text-foreground placeholder:text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent",
+            "w-full rounded-md border border-border bg-surface px-3 py-2 pr-10 text-base text-foreground placeholder:text-muted focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent sm:text-sm",
             className,
           )}
           {...props}
