@@ -17,6 +17,7 @@ interface BookingWidgetProps {
 export function BookingWidget({ slug }: BookingWidgetProps) {
   const [date, setDate] = useState(todayAsDateOnly());
   const [slots, setSlots] = useState<string[] | null>(null);
+  const [isWorkingDay, setIsWorkingDay] = useState(true);
   const [slotsError, setSlotsError] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
 
@@ -34,7 +35,10 @@ export function BookingWidget({ slug }: BookingWidgetProps) {
 
     getAvailability(slug, date)
       .then((result) => {
-        if (!cancelled) setSlots(result);
+        if (!cancelled) {
+          setSlots(result.availableSlots);
+          setIsWorkingDay(result.isWorkingDay);
+        }
       })
       .catch((err) => {
         if (!cancelled) {
@@ -103,7 +107,13 @@ export function BookingWidget({ slug }: BookingWidgetProps) {
             </Alert>
           )}
           {slots !== null && slots.length === 0 && !slotsError && (
-            <p className="text-sm text-muted">No hay horarios disponibles para esta fecha.</p>
+            isWorkingDay ? (
+              <p className="text-sm text-muted">No hay horarios disponibles para esta fecha.</p>
+            ) : (
+              <div className="rounded-md border border-cat-blue/25 bg-cat-blue/8 px-4 py-3">
+                <p className="text-base font-semibold text-cat-blue">Día no laborable.</p>
+              </div>
+            )
           )}
           {slots !== null && slots.length > 0 && (
             <div className="flex flex-wrap gap-2">

@@ -20,7 +20,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
-      <body className="min-h-full flex flex-col overflow-x-hidden bg-background text-foreground">
+      <body
+        className="min-h-full flex flex-col overflow-x-hidden bg-background text-foreground"
+        suppressHydrationWarning
+      >
         {children}
         <Script
           id="theme-init"

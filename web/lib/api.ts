@@ -5,6 +5,7 @@ import type {
   AppointmentsPageResponse,
   ApiProblemDetails,
   AuthSession,
+  AvailabilityResult,
   BookAppointmentRequest,
   LoginProfessionalRequest,
   ProfessionalPublicProfile,
@@ -53,6 +54,7 @@ interface RawGetProfessionalAppointmentsResponse {
 
 interface RawGetAvailabilityResponse {
   availableSlots: string[];
+  isWorkingDay: boolean;
 }
 
 interface ApiFetchOptions {
@@ -129,11 +131,11 @@ export async function getProfessionalProfile(slug: string): Promise<Professional
   }
 }
 
-export async function getAvailability(slug: string, date: string): Promise<string[]> {
+export async function getAvailability(slug: string, date: string): Promise<AvailabilityResult> {
   const response = await apiFetch<RawGetAvailabilityResponse>(
     `/api/professionals/${encodeURIComponent(slug)}/availability?date=${date}`,
   );
-  return response.availableSlots;
+  return { availableSlots: response.availableSlots, isWorkingDay: response.isWorkingDay };
 }
 
 export async function bookAppointment(

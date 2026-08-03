@@ -4,4 +4,5 @@ namespace TuCita.Application.Professionals.GetAvailability;
 /// Horarios disponibles de un profesional para la fecha solicitada.
 /// </summary>
 public sealed record GetAvailabilityResponse(
-    IReadOnlyCollection<TimeOnly> AvailableSlots);
+    IReadOnlyCollection<TimeOnly> AvailableSlots,
+    bool IsWorkingDay);

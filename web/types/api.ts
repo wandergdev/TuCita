@@ -47,6 +47,11 @@ export interface ProfessionalPublicProfile {
   appointmentDurationMinutes: number;
 }
 
+export interface AvailabilityResult {
+  availableSlots: string[];
+  isWorkingDay: boolean;
+}
+
 export interface AppointmentSummary {
   id: string;
   customerName: string;

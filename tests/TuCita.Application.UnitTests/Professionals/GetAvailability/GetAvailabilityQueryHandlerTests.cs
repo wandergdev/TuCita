@@ -45,6 +45,29 @@ public class GetAvailabilityQueryHandlerTests
 
         // Assert
         response.AvailableSlots.Should().Contain(new TimeOnly(8, 0));
+        response.IsWorkingDay.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task HandleAsync_ShouldReturnNoSlotsAndIsWorkingDayFalse_WhenDateIsNotAWorkDay()
+    {
+        // Arrange: el profesional de prueba trabaja Lunes-Viernes; el sábado no.
+        var saturday = new DateOnly(2026, 8, 8);
+        var professional = ProfessionalTestData.Create();
+        _dateTimeProvider.Setup(d => d.Now).Returns(saturday.ToDateTime(new TimeOnly(7, 0)));
+        _professionalRepository.Setup(r => r.GetBySlugAsync(professional.Slug.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(professional);
+        _appointmentRepository.Setup(r => r.GetByProfessionalAndDateAsync(
+                professional.Id, saturday, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyCollection<Appointment>)[]);
+
+        // Act
+        var response = await _handler.HandleAsync(
+            new GetAvailabilityQuery(professional.Slug.Value, saturday));
+
+        // Assert
+        response.AvailableSlots.Should().BeEmpty();
+        response.IsWorkingDay.Should().BeFalse();
     }
 
     [Fact]

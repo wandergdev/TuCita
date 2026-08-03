@@ -50,6 +50,8 @@ public sealed class GetAvailabilityQueryHandler
             existingAppointments,
             _dateTimeProvider.Now);
 
-        return new GetAvailabilityResponse(availableSlots);
+        var isWorkingDay = professional.WorkingSchedule.WorksOn(query.Date.DayOfWeek);
+
+        return new GetAvailabilityResponse(availableSlots, isWorkingDay);
     }
 }
