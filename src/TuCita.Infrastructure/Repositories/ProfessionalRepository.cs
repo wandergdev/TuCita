@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using TuCita.Domain.Entities;
 using TuCita.Domain.Identifiers;
 using TuCita.Domain.Repositories;
@@ -47,7 +48,23 @@ public sealed class ProfessionalRepository : IProfessionalRepository
         CancellationToken cancellationToken = default)
     {
         await _dbContext.Professionals.AddAsync(professional, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException postgresException
+            && postgresException.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            throw new InvalidOperationException(
+                postgresException.ConstraintName switch
+                {
+                    "IX_professionals_slug" => "El slug ya se encuentra registrado.",
+                    "IX_professionals_email" => "El correo ya se encuentra registrado.",
+                    _ => "Ya existe un profesional con esos datos.",
+                },
+                ex);
+        }
     }
 
     public async Task UpdateAsync(
