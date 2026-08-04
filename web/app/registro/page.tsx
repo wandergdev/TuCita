@@ -16,6 +16,7 @@ import { WorkingScheduleEditor } from "@/components/forms/WorkingScheduleEditor"
 import { CATEGORY_LABELS } from "@/lib/labels";
 import { toTimeOnlyString } from "@/lib/format";
 import { ApiError, registerProfessional } from "@/lib/api";
+import { sanitizePhoneInput } from "@/lib/phone";
 import type { Category, DayOfWeek } from "@/types/api";
 
 const DURATION_OPTIONS = [30, 45, 60, 90];
@@ -111,12 +112,15 @@ export default function RegistroPage() {
                     onChange={(event) => setEmail(event.target.value)}
                   />
                 </Field>
-                <Field label="Teléfono" htmlFor="phoneNumber">
+                <Field label="Teléfono" htmlFor="phoneNumber" hint="10 dígitos, ej. 8095551234">
                   <Input
                     id="phoneNumber"
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
                     required
                     value={phoneNumber}
-                    onChange={(event) => setPhoneNumber(event.target.value)}
+                    onChange={(event) => setPhoneNumber(sanitizePhoneInput(event.target.value))}
                   />
                 </Field>
               </div>

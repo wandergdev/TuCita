@@ -11,15 +11,14 @@ public sealed record PhoneNumber
 
     public static PhoneNumber Create(string value)
     {
-        if (string.IsNullOrWhiteSpace((value)))
+        if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("Teléfono vacío");
 
-        value = value.Replace(" ", "").Replace("-", "");
+        var digitsOnly = new string(value.Where(char.IsDigit).ToArray());
 
-        if (value.Length < 10)
-            throw new ArgumentException("Teléfono inválido");
-        
-        return new PhoneNumber(value);
+        if (digitsOnly.Length != 10)
+            throw new ArgumentException("El teléfono debe tener 10 dígitos.");
 
+        return new PhoneNumber(digitsOnly);
     }
 }

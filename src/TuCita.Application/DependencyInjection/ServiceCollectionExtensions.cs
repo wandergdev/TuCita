@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using TuCita.Application.Appointments.BookAppointment;
 using TuCita.Application.Appointments.CancelAppointment;
+using TuCita.Application.Appointments.CheckExistingAppointment;
 using TuCita.Application.Appointments.CompleteAppointment;
 using TuCita.Application.Appointments.GetAppointmentStats;
 using TuCita.Application.Appointments.GetProfessionalAppointments;
@@ -22,6 +23,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<GetProfessionalPublicProfileQueryHandler>();
         services.AddScoped<GetAvailabilityQueryHandler>();
         services.AddScoped<BookAppointmentCommandHandler>();
+        services.AddScoped<CheckExistingAppointmentQueryHandler>();
         services.AddScoped<GetProfessionalAppointmentsQueryHandler>();
         services.AddScoped<GetAppointmentStatsQueryHandler>();
         services.AddScoped<CancelAppointmentCommandHandler>();

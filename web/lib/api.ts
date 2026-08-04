@@ -12,6 +12,7 @@ import type {
   RegisterProfessionalRequest,
   StatsRange,
 } from "@/types/api";
+import { clearSession } from "@/lib/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5222";
 
@@ -92,6 +93,14 @@ async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise
   const data = isJson ? await response.json() : undefined;
 
   if (!response.ok) {
+    if (response.status === 401 && options.token) {
+      clearSession();
+      if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+      throw new ApiError(401, "Tu sesión expiró.");
+    }
+
     const problem = data as ApiProblemDetails | undefined;
     throw new ApiError(
       response.status,
@@ -147,6 +156,18 @@ export async function bookAppointment(
     { method: "POST", body: payload },
   );
   return response.appointmentId.value;
+}
+
+export async function checkExistingAppointment(
+  slug: string,
+  customerPhone: string,
+  date: string,
+): Promise<boolean> {
+  const response = await apiFetch<{ hasExistingAppointment: boolean }>(
+    `/api/professionals/${encodeURIComponent(slug)}/appointments/existing` +
+      `?customerPhone=${encodeURIComponent(customerPhone)}&date=${date}`,
+  );
+  return response.hasExistingAppointment;
 }
 
 export async function getMyAppointments(

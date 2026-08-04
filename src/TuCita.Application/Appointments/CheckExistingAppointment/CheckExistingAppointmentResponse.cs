@@ -1,0 +1,3 @@
+namespace TuCita.Application.Appointments.CheckExistingAppointment;
+
+public sealed record CheckExistingAppointmentResponse(bool HasExistingAppointment);

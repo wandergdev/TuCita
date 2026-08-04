@@ -3,6 +3,7 @@ using TuCita.Domain.Entities;
 using TuCita.Domain.Enums;
 using TuCita.Domain.Identifiers;
 using TuCita.Domain.Repositories;
+using TuCita.Domain.ValueObjects;
 using TuCita.Infrastructure.Persistence;
 
 namespace TuCita.Infrastructure.Repositories;
@@ -49,6 +50,18 @@ public sealed class AppointmentRepository : IAppointmentRepository
         => await _dbContext.Appointments
             .Where(a => a.ProfessionalId == professionalId && a.Date == date)
             .ToListAsync(cancellationToken);
+
+    public Task<bool> HasScheduledAppointmentAsync(
+        ProfessionalId professionalId,
+        PhoneNumber customerPhone,
+        DateOnly date,
+        CancellationToken cancellationToken = default)
+        => _dbContext.Appointments.AnyAsync(a =>
+            a.ProfessionalId == professionalId
+            && a.CustomerPhone == customerPhone
+            && a.Date == date
+            && a.Status == AppointmentStatus.Scheduled,
+            cancellationToken);
 
     public async Task<AppointmentStatsResult> GetStatsByProfessionalAsync(
         ProfessionalId professionalId,

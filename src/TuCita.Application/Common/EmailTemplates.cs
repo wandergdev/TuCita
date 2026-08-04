@@ -10,7 +10,8 @@ public static class EmailTemplates
         string customerPhone,
         DateOnly date,
         TimeOnly startTime,
-        TimeOnly endTime)
+        TimeOnly endTime,
+        string panelUrl)
     {
         var formattedDate = SpanishFormat.Date(date);
         var formattedTime = $"{SpanishFormat.Time(startTime)} – {SpanishFormat.Time(endTime)}";
@@ -19,7 +20,8 @@ public static class EmailTemplates
             $"Tienes una nueva cita con {customerName}.\n" +
             $"Fecha: {formattedDate}\n" +
             $"Hora: {formattedTime}\n" +
-            $"Teléfono: {customerPhone}";
+            $"Teléfono: {customerPhone}\n\n" +
+            $"Ve tu panel: {panelUrl}";
 
         var htmlBody = $$"""
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background-color: #f5f6f8; padding: 32px 16px;">
@@ -48,6 +50,11 @@ public static class EmailTemplates
                     <td style="padding: 10px 0; text-align: right; font-weight: 600;">{{formattedTime}}</td>
                   </tr>
                 </table>
+                <div style="margin-top: 24px; text-align: center;">
+                  <a href="{{panelUrl}}" style="display: inline-block; padding: 12px 28px; background-color: #0d9488; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">
+                    Ver mi panel
+                  </a>
+                </div>
               </div>
               <p style="max-width: 480px; margin: 16px auto 0; text-align: center; font-size: 12px; color: #94a3b8;">
                 TuCita · agenda citas sin llamadas ni WhatsApp

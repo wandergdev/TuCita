@@ -28,6 +28,9 @@ public static class ServiceCollectionExtensions
         services.AddOptions<EmailOptions>()
             .Bind(configuration.GetSection(EmailOptions.SectionName));
 
+        services.AddOptions<FrontendOptions>()
+            .Bind(configuration.GetSection(FrontendOptions.SectionName));
+
         services.AddOptions<TwilioOptions>()
             .Bind(configuration.GetSection(TwilioOptions.SectionName));
 

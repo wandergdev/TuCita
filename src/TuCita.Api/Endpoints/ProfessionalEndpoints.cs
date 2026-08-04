@@ -1,4 +1,5 @@
 using TuCita.Api.Contracts.Professionals;
+using TuCita.Application.Appointments.CheckExistingAppointment;
 using TuCita.Application.Professionals.GetAvailability;
 using TuCita.Application.Professionals.GetProfessionalPublicProfile;
 using TuCita.Application.Professionals.LoginProfessional;
@@ -70,6 +71,20 @@ public static class ProfessionalEndpoints
         {
             var response = await handler.HandleAsync(
                 new GetAvailabilityQuery(slug, date),
+                cancellationToken);
+
+            return Results.Ok(response);
+        });
+
+        group.MapGet("/{slug}/appointments/existing", async (
+            string slug,
+            string customerPhone,
+            DateOnly date,
+            CheckExistingAppointmentQueryHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var response = await handler.HandleAsync(
+                new CheckExistingAppointmentQuery(slug, customerPhone, date),
                 cancellationToken);
 
             return Results.Ok(response);

@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using TuCita.Application.Abstractions;
 using TuCita.Application.Common;
 using TuCita.Application.Common.Exceptions;
+using TuCita.Application.Options;
 using TuCita.Domain.Entities;
 using TuCita.Domain.Repositories;
 using TuCita.Domain.Services;
@@ -19,6 +21,7 @@ public sealed class BookAppointmentCommandHandler
     private readonly IIdentifierGenerator _identifierGenerator;
     private readonly IEmailSender _emailSender;
     private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly string _frontendBaseUrl;
     private readonly ILogger<BookAppointmentCommandHandler> _logger;
 
     public BookAppointmentCommandHandler(
@@ -27,6 +30,7 @@ public sealed class BookAppointmentCommandHandler
         IIdentifierGenerator identifierGenerator,
         IEmailSender emailSender,
         IDateTimeProvider dateTimeProvider,
+        IOptions<FrontendOptions> frontendOptions,
         ILogger<BookAppointmentCommandHandler> logger)
     {
         _professionalRepository = professionalRepository
@@ -39,6 +43,8 @@ public sealed class BookAppointmentCommandHandler
             ?? throw new ArgumentNullException(nameof(emailSender));
         _dateTimeProvider = dateTimeProvider
             ?? throw new ArgumentNullException(nameof(dateTimeProvider));
+        _frontendBaseUrl = frontendOptions?.Value.BaseUrl
+            ?? throw new ArgumentNullException(nameof(frontendOptions));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -101,7 +107,8 @@ public sealed class BookAppointmentCommandHandler
                 appointment.CustomerPhone.Value,
                 appointment.Date,
                 appointment.StartTime,
-                appointment.EndTime);
+                appointment.EndTime,
+                $"{_frontendBaseUrl}/panel");
 
             // Un envío de correo colgado (ej. una conexión SMTP que nunca
             // responde) no debe bloquear indefinidamente la respuesta de la

@@ -1,6 +1,7 @@
 using TuCita.Domain.Entities;
 using TuCita.Domain.Enums;
 using TuCita.Domain.Identifiers;
+using TuCita.Domain.ValueObjects;
 
 namespace TuCita.Domain.Repositories;
 
@@ -24,6 +25,17 @@ public interface IAppointmentRepository
 
     Task<IReadOnlyCollection<Appointment>> GetByProfessionalAndDateAsync(
         ProfessionalId professionalId,
+        DateOnly date,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Indica si ese teléfono ya tiene una cita programada con este
+    /// profesional en esa fecha, para advertir antes de una reserva
+    /// duplicada.
+    /// </summary>
+    Task<bool> HasScheduledAppointmentAsync(
+        ProfessionalId professionalId,
+        PhoneNumber customerPhone,
         DateOnly date,
         CancellationToken cancellationToken = default);
 

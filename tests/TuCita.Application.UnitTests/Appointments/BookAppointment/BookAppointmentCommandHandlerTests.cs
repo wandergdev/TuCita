@@ -4,6 +4,7 @@ using Moq;
 using TuCita.Application.Abstractions;
 using TuCita.Application.Appointments.BookAppointment;
 using TuCita.Application.Common.Exceptions;
+using TuCita.Application.Options;
 using TuCita.Application.UnitTests.TestData;
 using TuCita.Domain.Entities;
 using TuCita.Domain.Identifiers;
@@ -28,12 +29,16 @@ public class BookAppointmentCommandHandlerTests
     {
         _dateTimeProvider.Setup(d => d.Now).Returns(Monday.ToDateTime(new TimeOnly(8, 30)));
 
+        var frontendOptions = Microsoft.Extensions.Options.Options.Create(
+            new FrontendOptions { BaseUrl = "https://tucita.example" });
+
         _handler = new BookAppointmentCommandHandler(
             _professionalRepository.Object,
             _appointmentRepository.Object,
             _identifierGenerator.Object,
             _emailSender.Object,
             _dateTimeProvider.Object,
+            frontendOptions,
             _logger.Object);
     }
 

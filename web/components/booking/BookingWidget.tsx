@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { cn } from "@/lib/cn";
-import { ApiError, bookAppointment, getAvailability } from "@/lib/api";
+import { ApiError, bookAppointment, checkExistingAppointment, getAvailability } from "@/lib/api";
 import { formatDateLabel, formatTimeLabel, todayAsDateOnly, toTimeOnlyString } from "@/lib/format";
+import { PHONE_DIGIT_COUNT, sanitizePhoneInput } from "@/lib/phone";
 
 interface BookingWidgetProps {
   slug: string;
@@ -25,6 +26,8 @@ export function BookingWidget({ slug }: BookingWidgetProps) {
   const [customerPhone, setCustomerPhone] = useState("");
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
+  const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
   const [confirmedSlot, setConfirmedSlot] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,25 +57,49 @@ export function BookingWidget({ slug }: BookingWidgetProps) {
     };
   }, [slug, date]);
 
-  async function handleBook(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!selectedSlot) return;
-
-    setBookingError(null);
+  async function submitBooking(startTime: string) {
     setIsSubmitting(true);
     try {
       await bookAppointment(slug, {
         customerName,
         customerPhone,
         date,
-        startTime: toTimeOnlyString(selectedSlot),
+        startTime: toTimeOnlyString(startTime),
       });
-      setConfirmedSlot(selectedSlot);
+      setConfirmedSlot(startTime);
     } catch (err) {
       setBookingError(err instanceof ApiError ? err.message : "No se pudo completar la reserva.");
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  async function handleBook(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedSlot) return;
+    setBookingError(null);
+
+    // El cliente ya vio la advertencia de cita duplicada y confirmó que
+    // quiere reservar de todas formas.
+    if (showDuplicateWarning) {
+      await submitBooking(selectedSlot);
+      return;
+    }
+
+    setIsCheckingDuplicate(true);
+    try {
+      const hasExistingAppointment = await checkExistingAppointment(slug, customerPhone, date);
+      if (hasExistingAppointment) {
+        setShowDuplicateWarning(true);
+        return;
+      }
+    } catch {
+      // Si el chequeo falla, no bloqueamos la reserva por eso.
+    } finally {
+      setIsCheckingDuplicate(false);
+    }
+
+    await submitBooking(selectedSlot);
   }
 
   if (confirmedSlot) {
@@ -93,7 +120,10 @@ export function BookingWidget({ slug }: BookingWidgetProps) {
           type="date"
           min={todayAsDateOnly()}
           value={date}
-          onChange={(event) => setDate(event.target.value)}
+          onChange={(event) => {
+            setDate(event.target.value);
+            setShowDuplicateWarning(false);
+          }}
         />
       </Field>
 
@@ -121,7 +151,10 @@ export function BookingWidget({ slug }: BookingWidgetProps) {
                 <button
                   key={slot}
                   type="button"
-                  onClick={() => setSelectedSlot(slot)}
+                  onClick={() => {
+                    setSelectedSlot(slot);
+                    setShowDuplicateWarning(false);
+                  }}
                   className={cn(
                     "rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
                     selectedSlot === slot
@@ -148,18 +181,39 @@ export function BookingWidget({ slug }: BookingWidgetProps) {
               onChange={(event) => setCustomerName(event.target.value)}
             />
           </Field>
-          <Field label="Tu teléfono" htmlFor="customerPhone">
+          <Field label="Tu teléfono" htmlFor="customerPhone" hint="10 dígitos, ej. 8095551234">
             <Input
               id="customerPhone"
+              type="tel"
+              inputMode="numeric"
+              maxLength={PHONE_DIGIT_COUNT}
               required
               value={customerPhone}
-              onChange={(event) => setCustomerPhone(event.target.value)}
+              onChange={(event) => {
+                setCustomerPhone(sanitizePhoneInput(event.target.value));
+                setShowDuplicateWarning(false);
+              }}
             />
           </Field>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting
-              ? "Reservando…"
-              : `Reservar ${formatDateLabel(date)} a las ${formatTimeLabel(selectedSlot)}`}
+
+          {showDuplicateWarning && (
+            <Alert tone="error">
+              Ya tienes una cita programada este día con este profesional. ¿Deseas reservar otra
+              de todas formas?
+            </Alert>
+          )}
+
+          <Button
+            type="submit"
+            disabled={isSubmitting || isCheckingDuplicate || customerPhone.length !== PHONE_DIGIT_COUNT}
+          >
+            {isCheckingDuplicate
+              ? "Verificando…"
+              : isSubmitting
+                ? "Reservando…"
+                : showDuplicateWarning
+                  ? "Sí, reservar de todas formas"
+                  : `Reservar ${formatDateLabel(date)} a las ${formatTimeLabel(selectedSlot)}`}
           </Button>
         </form>
       )}
