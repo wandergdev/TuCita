@@ -64,5 +64,18 @@ public sealed class ProfessionalConfiguration : IEntityTypeConfiguration<Profess
 
         builder.Property(p => p.IsActive)
             .IsRequired();
+
+        builder.Property(p => p.EmailVerified)
+            .HasColumnName("email_verified")
+            .IsRequired();
+
+        builder.Property(p => p.EmailVerificationToken)
+            .HasColumnName("email_verification_token")
+            .HasMaxLength(64);
+        builder.HasIndex(p => p.EmailVerificationToken);
+
+        builder.Property(p => p.EmailVerificationTokenExpiresAt)
+            .HasConversion<UtcNullableDateTimeConverter>()
+            .HasColumnName("email_verification_token_expires_at");
     }
 }

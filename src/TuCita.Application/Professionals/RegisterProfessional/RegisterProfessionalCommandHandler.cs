@@ -1,4 +1,8 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using TuCita.Application.Abstractions;
+using TuCita.Application.Common;
+using TuCita.Application.Options;
 using TuCita.Domain.Entities;
 using TuCita.Domain.Identifiers;
 using TuCita.Domain.Repositories;
@@ -11,14 +15,24 @@ namespace TuCita.Application.Professionals.RegisterProfessional;
 /// </summary>
 public sealed class RegisterProfessionalCommandHandler
 {
+    private static readonly TimeSpan VerificationTokenLifetime = TimeSpan.FromHours(24);
+
     private readonly IProfessionalRepository _professionalRepository;
     private readonly IIdentifierGenerator _identifierGenerator;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IEmailSender _emailSender;
+    private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly string _frontendBaseUrl;
+    private readonly ILogger<RegisterProfessionalCommandHandler> _logger;
 
     public RegisterProfessionalCommandHandler(
         IProfessionalRepository professionalRepository,
         IIdentifierGenerator identifierGenerator,
-        IPasswordHasher passwordHasher)
+        IPasswordHasher passwordHasher,
+        IEmailSender emailSender,
+        IDateTimeProvider dateTimeProvider,
+        IOptions<FrontendOptions> frontendOptions,
+        ILogger<RegisterProfessionalCommandHandler> logger)
     {
         _professionalRepository = professionalRepository
                                   ?? throw new ArgumentNullException(nameof(professionalRepository));
@@ -26,6 +40,13 @@ public sealed class RegisterProfessionalCommandHandler
             ?? throw new ArgumentNullException(nameof(identifierGenerator));
         _passwordHasher = passwordHasher
             ?? throw new ArgumentNullException(nameof(passwordHasher));
+        _emailSender = emailSender
+            ?? throw new ArgumentNullException(nameof(emailSender));
+        _dateTimeProvider = dateTimeProvider
+            ?? throw new ArgumentNullException(nameof(dateTimeProvider));
+        _frontendBaseUrl = frontendOptions?.Value.BaseUrl
+            ?? throw new ArgumentNullException(nameof(frontendOptions));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<RegisterProfessionalResponse> HandleAsync(
@@ -55,11 +76,47 @@ public sealed class RegisterProfessionalCommandHandler
             command.WorkingSchedule,
             _passwordHasher.Hash(command.Password));
 
+        var verificationToken = Guid.NewGuid().ToString("N");
+        professional.SetEmailVerificationToken(
+            verificationToken,
+            _dateTimeProvider.Now.Add(VerificationTokenLifetime));
+
         await _professionalRepository.AddAsync(
             professional,
             cancellationToken);
 
+        await SendVerificationEmailAsync(professional, verificationToken, cancellationToken);
+
         return new RegisterProfessionalResponse(
             professional.Id);
+    }
+
+    private async Task SendVerificationEmailAsync(
+        Professional professional,
+        string verificationToken,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var verifyUrl = $"{_frontendBaseUrl}/verificar-correo?token={verificationToken}";
+            var (textBody, htmlBody) = EmailTemplates.VerifyEmail(professional.FullName, verifyUrl);
+
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(8));
+
+            await _emailSender.SendAsync(
+                professional.Email.Value,
+                "Confirma tu correo en TuCita",
+                textBody,
+                htmlBody,
+                timeoutCts.Token);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "No se pudo enviar el correo de verificación al profesional {ProfessionalId}",
+                professional.Id);
+        }
     }
 }

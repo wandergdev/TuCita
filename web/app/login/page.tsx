@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { ApiError, loginProfessional } from "@/lib/api";
+import { ApiError, loginProfessional, resendVerificationEmail } from "@/lib/api";
 import { setSession } from "@/lib/auth";
 
 export default function LoginPage() {
@@ -20,10 +20,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setNeedsVerification(false);
+    setResendSent(false);
     setIsSubmitting(true);
 
     try {
@@ -31,9 +36,22 @@ export default function LoginPage() {
       setSession(session);
       router.push("/panel");
     } catch (err) {
+      if (err instanceof ApiError && err.status === 403) {
+        setNeedsVerification(true);
+      }
       setError(err instanceof ApiError ? err.message : "No se pudo iniciar sesión.");
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleResend() {
+    setIsResending(true);
+    try {
+      await resendVerificationEmail(email);
+    } finally {
+      setIsResending(false);
+      setResendSent(true);
     }
   }
 
@@ -49,7 +67,27 @@ export default function LoginPage() {
 
           <Card className="mt-6">
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-              {error && <Alert tone="error">{error}</Alert>}
+              {error && (
+                <div className="flex flex-col gap-3">
+                  <Alert tone="error">{error}</Alert>
+                  {needsVerification &&
+                    (resendSent ? (
+                      <p className="text-sm text-muted">
+                        Si el correo existe y aún no ha sido verificado, te enviamos un nuevo
+                        enlace.
+                      </p>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isResending || !email}
+                        onClick={handleResend}
+                      >
+                        {isResending ? "Enviando…" : "Reenviar correo de verificación"}
+                      </Button>
+                    ))}
+                </div>
+              )}
 
               <Field label="Correo electrónico" htmlFor="email">
                 <Input

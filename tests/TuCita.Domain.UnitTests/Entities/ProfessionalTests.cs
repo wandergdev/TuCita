@@ -114,4 +114,46 @@ public class ProfessionalTests
             .Throw<ArgumentException>()
             .WithMessage("*contraseña*");
     }
+
+    [Fact]
+    public void Constructor_ShouldStartWithEmailUnverified()
+    {
+        // Arrange & Act
+        var professional = ProfessionalTestData.Create();
+
+        // Assert
+        professional.EmailVerified.Should().BeFalse();
+        professional.EmailVerificationToken.Should().BeNull();
+    }
+
+    [Fact]
+    public void SetEmailVerificationToken_ShouldStoreTokenAndExpiry()
+    {
+        // Arrange
+        var professional = ProfessionalTestData.Create();
+        var expiresAt = new DateTime(2026, 8, 4, 8, 0, 0);
+
+        // Act
+        professional.SetEmailVerificationToken("some-token", expiresAt);
+
+        // Assert
+        professional.EmailVerificationToken.Should().Be("some-token");
+        professional.EmailVerificationTokenExpiresAt.Should().Be(expiresAt);
+    }
+
+    [Fact]
+    public void VerifyEmail_ShouldMarkVerifiedAndClearToken()
+    {
+        // Arrange
+        var professional = ProfessionalTestData.Create();
+        professional.SetEmailVerificationToken("some-token", new DateTime(2026, 8, 4, 8, 0, 0));
+
+        // Act
+        professional.VerifyEmail();
+
+        // Assert
+        professional.EmailVerified.Should().BeTrue();
+        professional.EmailVerificationToken.Should().BeNull();
+        professional.EmailVerificationTokenExpiresAt.Should().BeNull();
+    }
 }

@@ -11,7 +11,11 @@ interface ProfessionalPageProps {
 
 export default async function ProfessionalPage({ params }: ProfessionalPageProps) {
   const { slug } = await params;
-  const profile = await getProfessionalProfile(slug);
+  // En esta versión de Next.js el segmento dinámico puede llegar todavía
+  // percent-encoded (ej. "%C3%B3" en vez de "ó") cuando contiene caracteres
+  // no ASCII, y volver a codificarlo en la llamada a la API lo duplica.
+  // decodeURIComponent es un no-op seguro sobre slugs que ya vienen limpios.
+  const profile = await getProfessionalProfile(decodeURIComponent(slug));
 
   if (!profile) {
     notFound();

@@ -131,6 +131,20 @@ export async function loginProfessional(payload: LoginProfessionalRequest): Prom
   };
 }
 
+export async function verifyEmail(token: string): Promise<void> {
+  await apiFetch<void>("/api/professionals/verify-email", {
+    method: "POST",
+    body: { token },
+  });
+}
+
+export async function resendVerificationEmail(email: string): Promise<void> {
+  await apiFetch<void>("/api/professionals/resend-verification", {
+    method: "POST",
+    body: { email },
+  });
+}
+
 export async function getProfessionalProfile(slug: string): Promise<ProfessionalPublicProfile | null> {
   try {
     return await apiFetch<ProfessionalPublicProfile>(`/api/professionals/${encodeURIComponent(slug)}`);

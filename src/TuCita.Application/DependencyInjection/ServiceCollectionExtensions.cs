@@ -11,6 +11,8 @@ using TuCita.Application.Professionals.GetAvailability;
 using TuCita.Application.Professionals.GetProfessionalPublicProfile;
 using TuCita.Application.Professionals.LoginProfessional;
 using TuCita.Application.Professionals.RegisterProfessional;
+using TuCita.Application.Professionals.ResendVerificationEmail;
+using TuCita.Application.Professionals.VerifyEmail;
 
 namespace TuCita.Application.DependencyInjection;
 
@@ -20,6 +22,8 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<RegisterProfessionalCommandHandler>();
         services.AddScoped<LoginProfessionalCommandHandler>();
+        services.AddScoped<VerifyEmailCommandHandler>();
+        services.AddScoped<ResendVerificationEmailCommandHandler>();
         services.AddScoped<GetProfessionalPublicProfileQueryHandler>();
         services.AddScoped<GetAvailabilityQueryHandler>();
         services.AddScoped<BookAppointmentCommandHandler>();

@@ -1,6 +1,8 @@
+using System.Text.RegularExpressions;
+
 namespace TuCita.Domain.ValueObjects;
 
-public sealed record Slug
+public sealed partial record Slug
 {
     public string Value { get; }
 
@@ -12,13 +14,18 @@ public sealed record Slug
     public static Slug Create(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("Slug no puede estar vacio");
+            throw new ArgumentException("El slug no puede estar vacío.");
 
-        value = value.Trim().ToLower();
+        value = value.Trim().ToLowerInvariant();
 
-        if (value.Contains(" "))
-            throw new ArgumentException(("Slug no puede contener espacios"));
-        
+        if (!SlugFormat().IsMatch(value))
+            throw new ArgumentException(
+                "El slug solo puede contener letras sin tildes (a-z), números y guiones, sin espacios " +
+                "ni empezar o terminar con guion.");
+
         return new Slug(value);
     }
+
+    [GeneratedRegex("^[a-z0-9]+(-[a-z0-9]+)*$")]
+    private static partial Regex SlugFormat();
 }

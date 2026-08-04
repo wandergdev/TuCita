@@ -20,6 +20,7 @@ public sealed class BookAppointmentCommandHandler
     private readonly IAppointmentRepository _appointmentRepository;
     private readonly IIdentifierGenerator _identifierGenerator;
     private readonly IEmailSender _emailSender;
+    private readonly IWhatsAppSender _whatsAppSender;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly string _frontendBaseUrl;
     private readonly ILogger<BookAppointmentCommandHandler> _logger;
@@ -29,6 +30,7 @@ public sealed class BookAppointmentCommandHandler
         IAppointmentRepository appointmentRepository,
         IIdentifierGenerator identifierGenerator,
         IEmailSender emailSender,
+        IWhatsAppSender whatsAppSender,
         IDateTimeProvider dateTimeProvider,
         IOptions<FrontendOptions> frontendOptions,
         ILogger<BookAppointmentCommandHandler> logger)
@@ -41,6 +43,8 @@ public sealed class BookAppointmentCommandHandler
             ?? throw new ArgumentNullException(nameof(identifierGenerator));
         _emailSender = emailSender
             ?? throw new ArgumentNullException(nameof(emailSender));
+        _whatsAppSender = whatsAppSender
+            ?? throw new ArgumentNullException(nameof(whatsAppSender));
         _dateTimeProvider = dateTimeProvider
             ?? throw new ArgumentNullException(nameof(dateTimeProvider));
         _frontendBaseUrl = frontendOptions?.Value.BaseUrl
@@ -90,12 +94,17 @@ public sealed class BookAppointmentCommandHandler
 
         await _appointmentRepository.AddAsync(appointment, cancellationToken);
 
-        await NotifyProfessionalAsync(professional, appointment, cancellationToken);
+        // Correo y WhatsApp corren en paralelo e independientes: que uno
+        // falle o se cuelgue no debe afectar al otro ni retrasar el doble
+        // la respuesta de la reserva (el cliente ya la completó en este punto).
+        await Task.WhenAll(
+            NotifyProfessionalByEmailAsync(professional, appointment, cancellationToken),
+            NotifyProfessionalByWhatsAppAsync(professional, appointment, cancellationToken));
 
         return new BookAppointmentResponse(appointment.Id);
     }
 
-    private async Task NotifyProfessionalAsync(
+    private async Task NotifyProfessionalByEmailAsync(
         Professional professional,
         Appointment appointment,
         CancellationToken cancellationToken)
@@ -110,9 +119,6 @@ public sealed class BookAppointmentCommandHandler
                 appointment.EndTime,
                 $"{_frontendBaseUrl}/panel");
 
-            // Un envío de correo colgado (ej. una conexión SMTP que nunca
-            // responde) no debe bloquear indefinidamente la respuesta de la
-            // reserva; el cliente ya la completó exitosamente en ese punto.
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutCts.CancelAfter(TimeSpan.FromSeconds(8));
 
@@ -128,6 +134,37 @@ public sealed class BookAppointmentCommandHandler
             _logger.LogError(
                 ex,
                 "No se pudo notificar por correo al profesional {ProfessionalId} sobre la cita {AppointmentId}",
+                professional.Id,
+                appointment.Id);
+        }
+    }
+
+    private async Task NotifyProfessionalByWhatsAppAsync(
+        Professional professional,
+        Appointment appointment,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var message = WhatsAppTemplates.NewAppointmentNotification(
+                appointment.CustomerName,
+                appointment.CustomerPhone.Value,
+                appointment.Date,
+                appointment.StartTime);
+
+            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(8));
+
+            await _whatsAppSender.SendTextMessageAsync(
+                professional.PhoneNumber.Value,
+                message,
+                timeoutCts.Token);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "No se pudo notificar por WhatsApp al profesional {ProfessionalId} sobre la cita {AppointmentId}",
                 professional.Id,
                 appointment.Id);
         }

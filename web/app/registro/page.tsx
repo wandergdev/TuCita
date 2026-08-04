@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Container } from "@/components/ui/Container";
@@ -17,13 +16,12 @@ import { CATEGORY_LABELS } from "@/lib/labels";
 import { toTimeOnlyString } from "@/lib/format";
 import { ApiError, registerProfessional } from "@/lib/api";
 import { sanitizePhoneInput } from "@/lib/phone";
+import { sanitizeSlugInput } from "@/lib/slug";
 import type { Category, DayOfWeek } from "@/types/api";
 
 const DURATION_OPTIONS = [30, 45, 60, 90];
 
 export default function RegistroPage() {
-  const router = useRouter();
-
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -38,6 +36,7 @@ export default function RegistroPage() {
 
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -71,12 +70,38 @@ export default function RegistroPage() {
         ],
         password,
       });
-      router.push("/login");
+      setIsRegistered(true);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo completar el registro.");
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (isRegistered) {
+    return (
+      <>
+        <SiteHeader />
+        <main className="flex flex-1 items-center justify-center py-12">
+          <Container className="max-w-md">
+            <h1 className="text-2xl font-semibold text-foreground">¡Ya casi!</h1>
+            <Card className="mt-6">
+              <Alert tone="success">
+                Te enviamos un correo a <strong>{email}</strong> con un enlace para verificar tu
+                cuenta. Debes verificarla antes de poder iniciar sesión.
+              </Alert>
+              <p className="mt-4 text-sm text-muted">
+                ¿No te llegó? Revisa tu carpeta de spam, o solicita un nuevo enlace desde la{" "}
+                <Link href="/login" className="font-medium text-accent hover:text-accent-hover">
+                  pantalla de inicio de sesión
+                </Link>
+                .
+              </p>
+            </Card>
+          </Container>
+        </main>
+      </>
+    );
   }
 
   return (
@@ -128,13 +153,17 @@ export default function RegistroPage() {
               <Field
                 label="Slug (tu URL pública)"
                 htmlFor="slug"
-                hint={slug ? `tucita.com/${slug}` : "Ejemplo: jose-barber"}
+                hint={
+                  slug
+                    ? `tucita.com/${slug}`
+                    : "Solo minúsculas, números y guiones, sin tildes ni espacios. Ejemplo: jose-barber"
+                }
               >
                 <Input
                   id="slug"
                   required
                   value={slug}
-                  onChange={(event) => setSlug(event.target.value)}
+                  onChange={(event) => setSlug(sanitizeSlugInput(event.target.value))}
                 />
               </Field>
 

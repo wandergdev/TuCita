@@ -11,7 +11,10 @@ public static class ProfessionalTestData
         string id = "professional-001",
         string email = "wander@email.com",
         string slug = "wander-genao",
-        string passwordHash = "hashed-password") => Professional.Create(
+        string passwordHash = "hashed-password",
+        bool emailVerified = true)
+    {
+        var professional = Professional.Create(
             new ProfessionalId(id),
             "Wander Genao",
             Email.Create(email),
@@ -21,4 +24,10 @@ public static class ProfessionalTestData
             AppointmentDuration.Create(30),
             WorkingScheduleTestData.Create(),
             passwordHash);
+
+        if (emailVerified)
+            professional.VerifyEmail();
+
+        return professional;
+    }
 }

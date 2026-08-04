@@ -64,4 +64,41 @@ public static class EmailTemplates
 
         return (textBody, htmlBody);
     }
+
+    public static (string TextBody, string HtmlBody) VerifyEmail(
+        string fullName,
+        string verifyUrl)
+    {
+        var textBody =
+            $"Hola {fullName}, confirma tu correo para activar tu cuenta de TuCita:\n" +
+            $"{verifyUrl}\n\n" +
+            "Este enlace vence en 24 horas.";
+
+        var htmlBody = $$"""
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background-color: #f5f6f8; padding: 32px 16px;">
+              <div style="max-width: 480px; margin: 0 auto; background: #ffffff; border: 1px solid #e4e7ec; border-radius: 12px; padding: 32px;">
+                <p style="margin: 0 0 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #0d9488;">
+                  Confirma tu cuenta
+                </p>
+                <h1 style="margin: 0 0 16px; font-size: 20px; line-height: 1.3; color: #1e293b;">
+                  Hola {{fullName}}, ya casi terminas
+                </h1>
+                <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.5; color: #64748b;">
+                  Confirma tu correo para activar tu cuenta y empezar a recibir reservas. Este
+                  enlace vence en 24 horas.
+                </p>
+                <div style="text-align: center;">
+                  <a href="{{verifyUrl}}" style="display: inline-block; padding: 12px 28px; background-color: #0d9488; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">
+                    Verificar mi correo
+                  </a>
+                </div>
+              </div>
+              <p style="max-width: 480px; margin: 16px auto 0; text-align: center; font-size: 12px; color: #94a3b8;">
+                TuCita · agenda citas sin llamadas ni WhatsApp
+              </p>
+            </div>
+            """;
+
+        return (textBody, htmlBody);
+    }
 }

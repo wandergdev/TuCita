@@ -4,6 +4,8 @@ using TuCita.Application.Professionals.GetAvailability;
 using TuCita.Application.Professionals.GetProfessionalPublicProfile;
 using TuCita.Application.Professionals.LoginProfessional;
 using TuCita.Application.Professionals.RegisterProfessional;
+using TuCita.Application.Professionals.ResendVerificationEmail;
+using TuCita.Application.Professionals.VerifyEmail;
 using TuCita.Domain.ValueObjects;
 
 namespace TuCita.Api.Endpoints;
@@ -49,6 +51,26 @@ public static class ProfessionalEndpoints
                 cancellationToken);
 
             return Results.Ok(response);
+        });
+
+        group.MapPost("/verify-email", async (
+            VerifyEmailRequest request,
+            VerifyEmailCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            await handler.HandleAsync(new VerifyEmailCommand(request.Token), cancellationToken);
+
+            return Results.NoContent();
+        });
+
+        group.MapPost("/resend-verification", async (
+            ResendVerificationEmailRequest request,
+            ResendVerificationEmailCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            await handler.HandleAsync(new ResendVerificationEmailCommand(request.Email), cancellationToken);
+
+            return Results.NoContent();
         });
 
         group.MapGet("/{slug}", async (

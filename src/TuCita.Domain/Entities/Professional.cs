@@ -55,6 +55,20 @@ public sealed class Professional : Entity<ProfessionalId>
     /// </summary>
     public string PasswordHash { get; private set; }
 
+    /// <summary>
+    /// Indica si el profesional confirmó su correo. No puede iniciar
+    /// sesión hasta que esto sea true.
+    /// </summary>
+    public bool EmailVerified { get; private set; }
+
+    /// <summary>
+    /// Token de un solo uso enviado por correo para verificar la
+    /// cuenta. Null una vez verificada.
+    /// </summary>
+    public string? EmailVerificationToken { get; private set; }
+
+    public DateTime? EmailVerificationTokenExpiresAt { get; private set; }
+
     private Professional(
         ProfessionalId id,
         string fullName,
@@ -86,6 +100,10 @@ public sealed class Professional : Entity<ProfessionalId>
 
         // Todo profesional inicia activo al momento de registrarse
         IsActive = true;
+
+        // El correo empieza sin verificar; se confirma con el enlace
+        // que se le manda al registrarse.
+        EmailVerified = false;
     }
 
     public static Professional Create(
@@ -109,5 +127,28 @@ public sealed class Professional : Entity<ProfessionalId>
             appointmentDuration,
             workingSchedule,
             passwordHash);
+    }
+
+    /// <summary>
+    /// Genera un nuevo token de verificación de correo, invalidando
+    /// cualquier token anterior (permite reenviar el correo).
+    /// </summary>
+    public void SetEmailVerificationToken(string token, DateTime expiresAt)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            throw new ArgumentException("El token de verificación es obligatorio.", nameof(token));
+
+        EmailVerificationToken = token;
+        EmailVerificationTokenExpiresAt = expiresAt;
+    }
+
+    /// <summary>
+    /// Confirma el correo del profesional e invalida el token usado.
+    /// </summary>
+    public void VerifyEmail()
+    {
+        EmailVerified = true;
+        EmailVerificationToken = null;
+        EmailVerificationTokenExpiresAt = null;
     }
 }

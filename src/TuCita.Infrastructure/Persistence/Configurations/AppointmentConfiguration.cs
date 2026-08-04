@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TuCita.Domain.Entities;
 using TuCita.Domain.Identifiers;
 using TuCita.Domain.ValueObjects;
+using TuCita.Infrastructure.Persistence.Converters;
 
 namespace TuCita.Infrastructure.Persistence.Configurations;
 
@@ -55,6 +56,7 @@ public sealed class AppointmentConfiguration : IEntityTypeConfiguration<Appointm
             .IsRequired();
 
         builder.Property(a => a.ReminderSentAt)
+            .HasConversion<UtcNullableDateTimeConverter>()
             .HasColumnName("reminder_sent_at");
 
         builder.HasIndex(a => new { a.ProfessionalId, a.Date });

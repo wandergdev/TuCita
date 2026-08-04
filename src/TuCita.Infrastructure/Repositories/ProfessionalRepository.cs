@@ -31,6 +31,12 @@ public sealed class ProfessionalRepository : IProfessionalRepository
         CancellationToken cancellationToken = default)
         => _dbContext.Professionals.FirstOrDefaultAsync(p => p.Email == Email.Create(email), cancellationToken);
 
+    public Task<Professional?> GetByEmailVerificationTokenAsync(
+        string token,
+        CancellationToken cancellationToken = default)
+        => _dbContext.Professionals.FirstOrDefaultAsync(
+            p => p.EmailVerificationToken == token, cancellationToken);
+
     public Task<bool> ExistsBySlugAsync(
         string slug,
         CancellationToken cancellationToken = default)

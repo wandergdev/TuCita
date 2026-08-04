@@ -39,6 +39,9 @@ public sealed class LoginProfessionalCommandHandler
         if (professional is null || !_passwordHasher.Verify(command.Password, professional.PasswordHash))
             throw new UnauthorizedException("Credenciales inválidas.");
 
+        if (!professional.EmailVerified)
+            throw new ForbiddenException("Debes verificar tu correo antes de iniciar sesión.");
+
         var token = _authTokenGenerator.Generate(professional);
 
         return new LoginProfessionalResponse(token, professional.Id, professional.Slug.Value);

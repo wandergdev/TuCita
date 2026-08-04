@@ -17,6 +17,10 @@ public interface IProfessionalRepository
         string email,
         CancellationToken cancellationToken = default);
 
+    Task<Professional?> GetByEmailVerificationTokenAsync(
+        string token,
+        CancellationToken cancellationToken = default);
+
     Task<bool> ExistsBySlugAsync(
         string slug,
         CancellationToken cancellationToken = default);

@@ -75,4 +75,21 @@ public class LoginProfessionalCommandHandlerTests
         // Assert
         await action.Should().ThrowAsync<UnauthorizedException>();
     }
+
+    [Fact]
+    public async Task HandleAsync_ShouldThrowException_WhenEmailIsNotVerified()
+    {
+        // Arrange
+        var professional = ProfessionalTestData.Create(emailVerified: false);
+        _professionalRepository.Setup(r => r.GetByEmailAsync(professional.Email.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(professional);
+        _passwordHasher.Setup(h => h.Verify("Sup3rSecret!", professional.PasswordHash)).Returns(true);
+
+        // Act
+        var action = () => _handler.HandleAsync(
+            new LoginProfessionalCommand(professional.Email.Value, "Sup3rSecret!"));
+
+        // Assert
+        await action.Should().ThrowAsync<ForbiddenException>();
+    }
 }

@@ -20,6 +20,7 @@ public class BookAppointmentCommandHandlerTests
     private readonly Mock<IAppointmentRepository> _appointmentRepository = new();
     private readonly Mock<IIdentifierGenerator> _identifierGenerator = new();
     private readonly Mock<IEmailSender> _emailSender = new();
+    private readonly Mock<IWhatsAppSender> _whatsAppSender = new();
     private readonly Mock<IDateTimeProvider> _dateTimeProvider = new();
     private readonly Mock<ILogger<BookAppointmentCommandHandler>> _logger = new();
     private readonly BookAppointmentCommandHandler _handler;
@@ -37,6 +38,7 @@ public class BookAppointmentCommandHandlerTests
             _appointmentRepository.Object,
             _identifierGenerator.Object,
             _emailSender.Object,
+            _whatsAppSender.Object,
             _dateTimeProvider.Object,
             frontendOptions,
             _logger.Object);
@@ -169,5 +171,52 @@ public class BookAppointmentCommandHandlerTests
         // Assert
         response.AppointmentId.Should().Be(appointmentId);
         _appointmentRepository.Verify(r => r.AddAsync(It.IsAny<Appointment>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_ShouldStillBookAppointment_WhenWhatsAppNotificationFails()
+    {
+        // Arrange
+        var professional = ProfessionalTestData.Create();
+        var appointmentId = new AppointmentId("appointment-001");
+
+        _professionalRepository.Setup(r => r.GetBySlugAsync("wander-genao", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(professional);
+        _appointmentRepository.Setup(r => r.GetByProfessionalAndDateAsync(
+                professional.Id, Monday, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyCollection<Appointment>)[]);
+        _identifierGenerator.Setup(g => g.NewAppointmentId()).Returns(appointmentId);
+        _whatsAppSender
+            .Setup(w => w.SendTextMessageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Twilio no disponible"));
+
+        // Act
+        var response = await _handler.HandleAsync(CreateCommand(new TimeOnly(9, 0)));
+
+        // Assert
+        response.AppointmentId.Should().Be(appointmentId);
+        _appointmentRepository.Verify(r => r.AddAsync(It.IsAny<Appointment>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_ShouldNotifyProfessionalByWhatsApp_WhenBookingSucceeds()
+    {
+        // Arrange
+        var professional = ProfessionalTestData.Create();
+        var appointmentId = new AppointmentId("appointment-001");
+
+        _professionalRepository.Setup(r => r.GetBySlugAsync("wander-genao", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(professional);
+        _appointmentRepository.Setup(r => r.GetByProfessionalAndDateAsync(
+                professional.Id, Monday, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyCollection<Appointment>)[]);
+        _identifierGenerator.Setup(g => g.NewAppointmentId()).Returns(appointmentId);
+
+        // Act
+        await _handler.HandleAsync(CreateCommand(new TimeOnly(9, 0)));
+
+        // Assert
+        _whatsAppSender.Verify(w => w.SendTextMessageAsync(
+            professional.PhoneNumber.Value, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }
