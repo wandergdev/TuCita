@@ -43,7 +43,10 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<IAuthTokenGenerator, JwtTokenGenerator>();
         services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
-        services.AddScoped<IEmailSender, SmtpEmailSender>();
+        services.AddHttpClient<IEmailSender, BrevoEmailSender>(client =>
+        {
+            client.BaseAddress = new Uri("https://api.brevo.com/v3/");
+        });
         services.AddScoped<IWhatsAppSender, TwilioWhatsAppSender>();
 
         services.AddHostedService<AppointmentReminderBackgroundService>();
