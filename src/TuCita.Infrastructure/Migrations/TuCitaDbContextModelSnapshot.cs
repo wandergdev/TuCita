@@ -153,6 +153,46 @@ namespace TuCita.Infrastructure.Migrations
 
                     b.ToTable("professionals", (string)null);
                 });
+
+            modelBuilder.Entity("TuCita.Domain.Entities.ScheduleException", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)");
+
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date")
+                        .HasColumnName("end_date");
+
+                    b.Property<string>("LunchBreak")
+                        .HasColumnType("text")
+                        .HasColumnName("lunch_break");
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("message");
+
+                    b.Property<string>("ProfessionalId")
+                        .IsRequired()
+                        .HasMaxLength(26)
+                        .HasColumnType("character varying(26)")
+                        .HasColumnName("professional_id");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date")
+                        .HasColumnName("start_date");
+
+                    b.Property<string>("WorkingHours")
+                        .HasColumnType("text")
+                        .HasColumnName("working_hours");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfessionalId", "StartDate", "EndDate");
+
+                    b.ToTable("schedule_exceptions", (string)null);
+                });
 #pragma warning restore 612, 618
         }
     }

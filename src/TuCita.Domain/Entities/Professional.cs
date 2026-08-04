@@ -151,4 +151,12 @@ public sealed class Professional : Entity<ProfessionalId>
         EmailVerificationToken = null;
         EmailVerificationTokenExpiresAt = null;
     }
+
+    /// <summary>
+    /// Reemplaza el horario habitual del profesional.
+    /// </summary>
+    public void UpdateWorkingSchedule(WorkingSchedule workingSchedule)
+    {
+        WorkingSchedule = workingSchedule ?? throw new ArgumentNullException(nameof(workingSchedule));
+    }
 }

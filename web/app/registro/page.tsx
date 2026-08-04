@@ -33,6 +33,9 @@ export default function RegistroPage() {
   const [days, setDays] = useState<DayOfWeek[]>(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
+  const [lunchBreakEnabled, setLunchBreakEnabled] = useState(false);
+  const [lunchBreakStartTime, setLunchBreakStartTime] = useState("12:00");
+  const [lunchBreakEndTime, setLunchBreakEndTime] = useState("13:00");
 
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,6 +69,8 @@ export default function RegistroPage() {
             days,
             startTime: toTimeOnlyString(startTime),
             endTime: toTimeOnlyString(endTime),
+            lunchBreakStartTime: lunchBreakEnabled ? toTimeOnlyString(lunchBreakStartTime) : undefined,
+            lunchBreakEndTime: lunchBreakEnabled ? toTimeOnlyString(lunchBreakEndTime) : undefined,
           },
         ],
         password,
@@ -203,6 +208,12 @@ export default function RegistroPage() {
                 endTime={endTime}
                 onChangeStartTime={setStartTime}
                 onChangeEndTime={setEndTime}
+                lunchBreakEnabled={lunchBreakEnabled}
+                onToggleLunchBreak={setLunchBreakEnabled}
+                lunchBreakStartTime={lunchBreakStartTime}
+                lunchBreakEndTime={lunchBreakEndTime}
+                onChangeLunchBreakStartTime={setLunchBreakStartTime}
+                onChangeLunchBreakEndTime={setLunchBreakEndTime}
               />
 
               <div className="grid gap-4 sm:grid-cols-2">

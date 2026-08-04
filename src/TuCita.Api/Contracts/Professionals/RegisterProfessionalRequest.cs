@@ -15,4 +15,6 @@ public sealed record RegisterProfessionalRequest(
 public sealed record WorkingScheduleRuleRequest(
     List<DayOfWeek> Days,
     TimeOnly StartTime,
-    TimeOnly EndTime);
+    TimeOnly EndTime,
+    TimeOnly? LunchBreakStartTime = null,
+    TimeOnly? LunchBreakEndTime = null);

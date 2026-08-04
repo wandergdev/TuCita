@@ -5,4 +5,5 @@ namespace TuCita.Application.Professionals.GetAvailability;
 /// </summary>
 public sealed record GetAvailabilityResponse(
     IReadOnlyCollection<TimeOnly> AvailableSlots,
-    bool IsWorkingDay);
+    bool IsWorkingDay,
+    string? Message);

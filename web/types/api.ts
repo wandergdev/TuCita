@@ -15,6 +15,8 @@ export interface WorkingScheduleRuleRequest {
   days: DayOfWeek[];
   startTime: string;
   endTime: string;
+  lunchBreakStartTime?: string | null;
+  lunchBreakEndTime?: string | null;
 }
 
 export interface RegisterProfessionalRequest {
@@ -50,6 +52,28 @@ export interface ProfessionalPublicProfile {
 export interface AvailabilityResult {
   availableSlots: string[];
   isWorkingDay: boolean;
+  message: string | null;
+}
+
+export interface ScheduleExceptionRequest {
+  startDate: string;
+  endDate: string;
+  startTime?: string;
+  endTime?: string;
+  lunchBreakStartTime?: string;
+  lunchBreakEndTime?: string;
+  message?: string;
+}
+
+export interface ScheduleException {
+  id: string;
+  startDate: string;
+  endDate: string;
+  startTime: string | null;
+  endTime: string | null;
+  lunchBreakStartTime: string | null;
+  lunchBreakEndTime: string | null;
+  message: string | null;
 }
 
 export interface AppointmentSummary {

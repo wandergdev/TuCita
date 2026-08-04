@@ -51,6 +51,15 @@ public sealed class AppointmentRepository : IAppointmentRepository
             .Where(a => a.ProfessionalId == professionalId && a.Date == date)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyCollection<Appointment>> GetByProfessionalAndDateRangeAsync(
+        ProfessionalId professionalId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default)
+        => await _dbContext.Appointments
+            .Where(a => a.ProfessionalId == professionalId && a.Date >= from && a.Date <= to)
+            .ToListAsync(cancellationToken);
+
     public Task<bool> HasScheduledAppointmentAsync(
         ProfessionalId professionalId,
         PhoneNumber customerPhone,

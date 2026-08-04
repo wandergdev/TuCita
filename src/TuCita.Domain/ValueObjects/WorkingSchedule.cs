@@ -30,6 +30,12 @@ public sealed class WorkingSchedule
             ?.WorkingHours;
     }
 
+    public TimeRange? GetLunchBreak(DayOfWeek dayOfWeek)
+    {
+        return Rules.FirstOrDefault(rule => rule.WorkDays.Contains(dayOfWeek))
+            ?.LunchBreak;
+    }
+
     private static void ValidateDuplicateDays(IEnumerable<ScheduleRule> rules)
     {
         var usedDays = new HashSet<DayOfWeek>();

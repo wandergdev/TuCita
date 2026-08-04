@@ -10,7 +10,10 @@ import type {
   LoginProfessionalRequest,
   ProfessionalPublicProfile,
   RegisterProfessionalRequest,
+  ScheduleException,
+  ScheduleExceptionRequest,
   StatsRange,
+  WorkingScheduleRuleRequest,
 } from "@/types/api";
 import { clearSession } from "@/lib/auth";
 
@@ -56,10 +59,27 @@ interface RawGetProfessionalAppointmentsResponse {
 interface RawGetAvailabilityResponse {
   availableSlots: string[];
   isWorkingDay: boolean;
+  message: string | null;
+}
+
+interface RawGetMyWorkingScheduleResponse {
+  rules: WorkingScheduleRuleRequest[];
+}
+
+interface RawScheduleException extends Omit<ScheduleException, "id"> {
+  id: RawId;
+}
+
+interface RawGetScheduleExceptionsResponse {
+  exceptions: RawScheduleException[];
+}
+
+interface RawCreateScheduleExceptionResponse {
+  scheduleExceptionId: RawId;
 }
 
 interface ApiFetchOptions {
-  method?: "GET" | "POST";
+  method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: unknown;
   token?: string | null;
   cache?: RequestCache;
@@ -158,7 +178,55 @@ export async function getAvailability(slug: string, date: string): Promise<Avail
   const response = await apiFetch<RawGetAvailabilityResponse>(
     `/api/professionals/${encodeURIComponent(slug)}/availability?date=${date}`,
   );
-  return { availableSlots: response.availableSlots, isWorkingDay: response.isWorkingDay };
+  return {
+    availableSlots: response.availableSlots,
+    isWorkingDay: response.isWorkingDay,
+    message: response.message,
+  };
+}
+
+export async function getMyWorkingSchedule(token: string): Promise<WorkingScheduleRuleRequest[]> {
+  const response = await apiFetch<RawGetMyWorkingScheduleResponse>("/api/professionals/me/schedule", {
+    token,
+  });
+  return response.rules;
+}
+
+export async function updateWorkingSchedule(
+  token: string,
+  workingSchedule: WorkingScheduleRuleRequest[],
+): Promise<void> {
+  await apiFetch<void>("/api/professionals/me/schedule", {
+    method: "PUT",
+    body: { workingSchedule },
+    token,
+  });
+}
+
+export async function getScheduleExceptions(token: string): Promise<ScheduleException[]> {
+  const response = await apiFetch<RawGetScheduleExceptionsResponse>(
+    "/api/professionals/me/schedule/exceptions",
+    { token },
+  );
+  return response.exceptions.map((exception) => ({ ...exception, id: exception.id.value }));
+}
+
+export async function createScheduleException(
+  token: string,
+  payload: ScheduleExceptionRequest,
+): Promise<string> {
+  const response = await apiFetch<RawCreateScheduleExceptionResponse>(
+    "/api/professionals/me/schedule/exceptions",
+    { method: "POST", body: payload, token },
+  );
+  return response.scheduleExceptionId.value;
+}
+
+export async function deleteScheduleException(token: string, id: string): Promise<void> {
+  await apiFetch<void>(`/api/professionals/me/schedule/exceptions/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    token,
+  });
 }
 
 export async function bookAppointment(

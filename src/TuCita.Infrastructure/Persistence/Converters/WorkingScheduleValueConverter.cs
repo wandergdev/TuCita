@@ -23,7 +23,9 @@ public sealed class WorkingScheduleValueConverter : ValueConverter<WorkingSchedu
         var rules = schedule.Rules.Select(rule => new ScheduleRuleJson(
             rule.WorkDays.Days.Select(day => (int)day).ToArray(),
             rule.WorkingHours.StartTime,
-            rule.WorkingHours.EndTime));
+            rule.WorkingHours.EndTime,
+            rule.LunchBreak?.StartTime,
+            rule.LunchBreak?.EndTime));
 
         return JsonSerializer.Serialize(rules);
     }
@@ -35,8 +37,16 @@ public sealed class WorkingScheduleValueConverter : ValueConverter<WorkingSchedu
 
         return new WorkingSchedule(rules.Select(rule => new ScheduleRule(
             new WorkDays(rule.Days.Select(day => (DayOfWeek)day)),
-            TimeRange.Create(rule.Start, rule.End))));
+            TimeRange.Create(rule.Start, rule.End),
+            rule.LunchBreakStart.HasValue && rule.LunchBreakEnd.HasValue
+                ? TimeRange.Create(rule.LunchBreakStart.Value, rule.LunchBreakEnd.Value)
+                : null)));
     }
 
-    private sealed record ScheduleRuleJson(int[] Days, TimeOnly Start, TimeOnly End);
+    private sealed record ScheduleRuleJson(
+        int[] Days,
+        TimeOnly Start,
+        TimeOnly End,
+        TimeOnly? LunchBreakStart = null,
+        TimeOnly? LunchBreakEnd = null);
 }

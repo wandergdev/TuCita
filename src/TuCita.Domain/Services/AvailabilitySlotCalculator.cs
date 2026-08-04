@@ -15,15 +15,18 @@ public static class AvailabilitySlotCalculator
         AppointmentDuration duration,
         DateOnly date,
         IReadOnlyCollection<Appointment> existingAppointments,
-        DateTime now)
+        DateTime now,
+        ScheduleException? exception = null)
     {
         ArgumentNullException.ThrowIfNull(workingSchedule);
         ArgumentNullException.ThrowIfNull(duration);
         ArgumentNullException.ThrowIfNull(existingAppointments);
 
-        var workingHours = workingSchedule.GetWorkingHours(date.DayOfWeek);
+        var workingHours = GetEffectiveWorkingHours(workingSchedule, date, exception);
         if (workingHours is null)
             return [];
+
+        var lunchBreak = GetEffectiveLunchBreak(workingSchedule, date, exception);
 
         var slots = new List<TimeOnly>();
         var stepMinutes = duration.Minutes;
@@ -44,12 +47,54 @@ public static class AvailabilitySlotCalculator
             if (date.ToDateTime(slotStart) <= now)
                 continue;
 
+            if (OverlapsLunchBreak(slotStart, slotEnd, lunchBreak))
+                continue;
+
             if (IsSlotAvailable(slotStart, slotEnd, existingAppointments))
                 slots.Add(slotStart);
         }
 
         return slots;
     }
+
+    /// <summary>
+    /// Devuelve el horario laboral efectivo para una fecha: el de la
+    /// excepción vigente si la hay (null si ese rango es no laborable),
+    /// o si no el del horario semanal habitual.
+    /// </summary>
+    public static TimeRange? GetEffectiveWorkingHours(
+        WorkingSchedule workingSchedule,
+        DateOnly date,
+        ScheduleException? exception)
+    {
+        ArgumentNullException.ThrowIfNull(workingSchedule);
+
+        if (exception is not null && exception.CoversDate(date))
+            return exception.WorkingHours;
+
+        return workingSchedule.GetWorkingHours(date.DayOfWeek);
+    }
+
+    /// <summary>
+    /// Devuelve el horario de almuerzo efectivo para una fecha: el de la
+    /// excepción vigente ese día (su propio almuerzo, si tiene horario
+    /// especial), o si no el de la regla semanal habitual.
+    /// </summary>
+    public static TimeRange? GetEffectiveLunchBreak(
+        WorkingSchedule workingSchedule,
+        DateOnly date,
+        ScheduleException? exception)
+    {
+        ArgumentNullException.ThrowIfNull(workingSchedule);
+
+        if (exception is not null && exception.CoversDate(date))
+            return exception.LunchBreak;
+
+        return workingSchedule.GetLunchBreak(date.DayOfWeek);
+    }
+
+    public static bool OverlapsLunchBreak(TimeOnly start, TimeOnly end, TimeRange? lunchBreak)
+        => lunchBreak is not null && Overlaps(start, end, lunchBreak.StartTime, lunchBreak.EndTime);
 
     public static bool IsSlotAvailable(
         TimeOnly start,

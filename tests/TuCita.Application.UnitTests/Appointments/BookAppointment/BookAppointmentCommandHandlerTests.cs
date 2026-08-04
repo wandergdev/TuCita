@@ -18,6 +18,7 @@ public class BookAppointmentCommandHandlerTests
 {
     private readonly Mock<IProfessionalRepository> _professionalRepository = new();
     private readonly Mock<IAppointmentRepository> _appointmentRepository = new();
+    private readonly Mock<IScheduleExceptionRepository> _scheduleExceptionRepository = new();
     private readonly Mock<IIdentifierGenerator> _identifierGenerator = new();
     private readonly Mock<IEmailSender> _emailSender = new();
     private readonly Mock<IWhatsAppSender> _whatsAppSender = new();
@@ -36,6 +37,7 @@ public class BookAppointmentCommandHandlerTests
         _handler = new BookAppointmentCommandHandler(
             _professionalRepository.Object,
             _appointmentRepository.Object,
+            _scheduleExceptionRepository.Object,
             _identifierGenerator.Object,
             _emailSender.Object,
             _whatsAppSender.Object,
@@ -196,6 +198,92 @@ public class BookAppointmentCommandHandlerTests
         // Assert
         response.AppointmentId.Should().Be(appointmentId);
         _appointmentRepository.Verify(r => r.AddAsync(It.IsAny<Appointment>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_ShouldThrowException_WhenDateIsMarkedAsDayOffByException()
+    {
+        // Arrange: el horario habitual permite las 9:00, pero hay una excepción
+        // que marca ese día como no laborable.
+        var professional = ProfessionalTestData.Create();
+        var dayOff = ScheduleException.Create(
+            new ScheduleExceptionId("exception-001"),
+            professional.Id,
+            Monday,
+            Monday,
+            workingHours: null,
+            message: "Vacaciones");
+
+        _professionalRepository.Setup(r => r.GetBySlugAsync("wander-genao", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(professional);
+        _scheduleExceptionRepository.Setup(r => r.GetForDateAsync(
+                professional.Id, Monday, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(dayOff);
+
+        // Act
+        var action = () => _handler.HandleAsync(CreateCommand(new TimeOnly(9, 0)));
+
+        // Assert
+        await action.Should().ThrowAsync<ArgumentException>();
+    }
+
+    [Fact]
+    public async Task HandleAsync_ShouldBookAppointment_WhenScheduleExceptionOverridesHours()
+    {
+        // Arrange: el horario habitual termina a las 18:00, pero una excepción
+        // habilita un horario especial de 19:00 a 21:00 para ese día.
+        var professional = ProfessionalTestData.Create();
+        var appointmentId = new AppointmentId("appointment-001");
+        var specialHours = ScheduleException.Create(
+            new ScheduleExceptionId("exception-001"),
+            professional.Id,
+            Monday,
+            Monday,
+            workingHours: TimeRange.Create(new TimeOnly(19, 0), new TimeOnly(21, 0)),
+            message: null);
+
+        _professionalRepository.Setup(r => r.GetBySlugAsync("wander-genao", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(professional);
+        _scheduleExceptionRepository.Setup(r => r.GetForDateAsync(
+                professional.Id, Monday, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(specialHours);
+        _appointmentRepository.Setup(r => r.GetByProfessionalAndDateAsync(
+                professional.Id, Monday, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((IReadOnlyCollection<Appointment>)[]);
+        _identifierGenerator.Setup(g => g.NewAppointmentId()).Returns(appointmentId);
+
+        // Act
+        var response = await _handler.HandleAsync(CreateCommand(new TimeOnly(19, 0)));
+
+        // Assert
+        response.AppointmentId.Should().Be(appointmentId);
+    }
+
+    [Fact]
+    public async Task HandleAsync_ShouldThrowException_WhenSlotOverlapsLunchBreak()
+    {
+        // Arrange: el profesional de prueba trabaja 8:00-18:00; se le agrega
+        // un almuerzo de 12:00 a 13:00.
+        var professional = ProfessionalTestData.Create();
+        professional.UpdateWorkingSchedule(new WorkingSchedule(
+        [
+            new ScheduleRule(
+                new WorkDays([
+                    DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
+                    DayOfWeek.Thursday, DayOfWeek.Friday,
+                ]),
+                TimeRange.Create(new TimeOnly(8, 0), new TimeOnly(18, 0)),
+                TimeRange.Create(new TimeOnly(12, 0), new TimeOnly(13, 0)))
+        ]));
+
+        _professionalRepository.Setup(r => r.GetBySlugAsync("wander-genao", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(professional);
+
+        // Act
+        var action = () => _handler.HandleAsync(CreateCommand(new TimeOnly(12, 0)));
+
+        // Assert
+        await action.Should().ThrowAsync<ArgumentException>();
     }
 
     [Fact]

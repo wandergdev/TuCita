@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
@@ -146,6 +147,9 @@ export default function PanelPage() {
           </div>
           <div className="flex items-center gap-2 self-end sm:self-auto">
             <ThemeToggle />
+            <Link href="/panel/configuracion">
+              <Button variant="outline">Configuración</Button>
+            </Link>
             <Button variant="outline" onClick={handleLogout}>
               Cerrar sesión
             </Button>

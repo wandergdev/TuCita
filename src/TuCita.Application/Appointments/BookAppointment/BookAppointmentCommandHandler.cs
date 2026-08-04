@@ -18,6 +18,7 @@ public sealed class BookAppointmentCommandHandler
 {
     private readonly IProfessionalRepository _professionalRepository;
     private readonly IAppointmentRepository _appointmentRepository;
+    private readonly IScheduleExceptionRepository _scheduleExceptionRepository;
     private readonly IIdentifierGenerator _identifierGenerator;
     private readonly IEmailSender _emailSender;
     private readonly IWhatsAppSender _whatsAppSender;
@@ -28,6 +29,7 @@ public sealed class BookAppointmentCommandHandler
     public BookAppointmentCommandHandler(
         IProfessionalRepository professionalRepository,
         IAppointmentRepository appointmentRepository,
+        IScheduleExceptionRepository scheduleExceptionRepository,
         IIdentifierGenerator identifierGenerator,
         IEmailSender emailSender,
         IWhatsAppSender whatsAppSender,
@@ -39,6 +41,8 @@ public sealed class BookAppointmentCommandHandler
             ?? throw new ArgumentNullException(nameof(professionalRepository));
         _appointmentRepository = appointmentRepository
             ?? throw new ArgumentNullException(nameof(appointmentRepository));
+        _scheduleExceptionRepository = scheduleExceptionRepository
+            ?? throw new ArgumentNullException(nameof(scheduleExceptionRepository));
         _identifierGenerator = identifierGenerator
             ?? throw new ArgumentNullException(nameof(identifierGenerator));
         _emailSender = emailSender
@@ -66,11 +70,26 @@ public sealed class BookAppointmentCommandHandler
         var endTime = command.StartTime.Add(
             TimeSpan.FromMinutes(professional.AppointmentDuration.Minutes));
 
-        var workingHours = professional.WorkingSchedule.GetWorkingHours(command.Date.DayOfWeek);
+        var exception = await _scheduleExceptionRepository.GetForDateAsync(
+            professional.Id,
+            command.Date,
+            cancellationToken);
+
+        var workingHours = AvailabilitySlotCalculator.GetEffectiveWorkingHours(
+            professional.WorkingSchedule,
+            command.Date,
+            exception);
         if (workingHours is null
             || command.StartTime < workingHours.StartTime
             || endTime > workingHours.EndTime)
             throw new ArgumentException("El horario seleccionado está fuera de la jornada laboral.");
+
+        var lunchBreak = AvailabilitySlotCalculator.GetEffectiveLunchBreak(
+            professional.WorkingSchedule,
+            command.Date,
+            exception);
+        if (AvailabilitySlotCalculator.OverlapsLunchBreak(command.StartTime, endTime, lunchBreak))
+            throw new ArgumentException("El horario seleccionado coincide con la hora de almuerzo.");
 
         if (command.Date.ToDateTime(command.StartTime) <= _dateTimeProvider.Now)
             throw new ArgumentException("El horario seleccionado ya pasó.");

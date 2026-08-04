@@ -29,6 +29,16 @@ public interface IAppointmentRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Citas de un profesional dentro de un rango de fechas (inclusive),
+    /// para detectar conflictos al marcar días como no laborables.
+    /// </summary>
+    Task<IReadOnlyCollection<Appointment>> GetByProfessionalAndDateRangeAsync(
+        ProfessionalId professionalId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Indica si ese teléfono ya tiene una cita programada con este
     /// profesional en esa fecha, para advertir antes de una reserva
     /// duplicada.

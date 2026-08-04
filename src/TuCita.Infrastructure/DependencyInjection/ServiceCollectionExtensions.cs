@@ -42,6 +42,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IProfessionalRepository, ProfessionalRepository>();
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+        services.AddScoped<IScheduleExceptionRepository, ScheduleExceptionRepository>();
         services.AddSingleton<IIdentifierGenerator, UlidGenerator>();
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<IAuthTokenGenerator, JwtTokenGenerator>();

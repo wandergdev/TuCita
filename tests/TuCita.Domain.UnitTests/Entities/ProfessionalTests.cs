@@ -156,4 +156,36 @@ public class ProfessionalTests
         professional.EmailVerificationToken.Should().BeNull();
         professional.EmailVerificationTokenExpiresAt.Should().BeNull();
     }
+
+    [Fact]
+    public void UpdateWorkingSchedule_ShouldReplaceWorkingSchedule()
+    {
+        // Arrange
+        var professional = ProfessionalTestData.Create();
+        var newSchedule = new WorkingSchedule(
+        [
+            new ScheduleRule(
+                new WorkDays([DayOfWeek.Saturday]),
+                TimeRange.Create(new TimeOnly(10, 0), new TimeOnly(14, 0)))
+        ]);
+
+        // Act
+        professional.UpdateWorkingSchedule(newSchedule);
+
+        // Assert
+        professional.WorkingSchedule.Should().BeSameAs(newSchedule);
+    }
+
+    [Fact]
+    public void UpdateWorkingSchedule_ShouldThrowException_WhenScheduleIsNull()
+    {
+        // Arrange
+        var professional = ProfessionalTestData.Create();
+
+        // Act
+        Action action = () => professional.UpdateWorkingSchedule(null!);
+
+        // Assert
+        action.Should().Throw<ArgumentNullException>();
+    }
 }

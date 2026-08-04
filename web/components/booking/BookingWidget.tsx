@@ -19,6 +19,7 @@ export function BookingWidget({ slug }: BookingWidgetProps) {
   const [date, setDate] = useState(todayAsDateOnly());
   const [slots, setSlots] = useState<string[] | null>(null);
   const [isWorkingDay, setIsWorkingDay] = useState(true);
+  const [dayMessage, setDayMessage] = useState<string | null>(null);
   const [slotsError, setSlotsError] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
 
@@ -41,6 +42,7 @@ export function BookingWidget({ slug }: BookingWidgetProps) {
         if (!cancelled) {
           setSlots(result.availableSlots);
           setIsWorkingDay(result.isWorkingDay);
+          setDayMessage(result.message);
         }
       })
       .catch((err) => {
@@ -142,6 +144,7 @@ export function BookingWidget({ slug }: BookingWidgetProps) {
             ) : (
               <div className="rounded-md border border-cat-blue/25 bg-cat-blue/8 px-4 py-3">
                 <p className="text-base font-semibold text-cat-blue">Día no laborable.</p>
+                {dayMessage && <p className="mt-1 text-sm text-cat-blue">{dayMessage}</p>}
               </div>
             )
           )}

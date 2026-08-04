@@ -11,4 +11,7 @@ public sealed class UlidGenerator : IIdentifierGenerator
 
     public AppointmentId NewAppointmentId()
         => new(Ulid.NewUlid().ToString());
+
+    public ScheduleExceptionId NewScheduleExceptionId()
+        => new(Ulid.NewUlid().ToString());
 }

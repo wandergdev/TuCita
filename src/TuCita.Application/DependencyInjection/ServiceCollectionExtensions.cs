@@ -8,10 +8,15 @@ using TuCita.Application.Appointments.GetProfessionalAppointments;
 using TuCita.Application.Appointments.MarkAppointmentAsNoShow;
 using TuCita.Application.Appointments.SendDueReminders;
 using TuCita.Application.Professionals.GetAvailability;
+using TuCita.Application.Professionals.GetMyWorkingSchedule;
 using TuCita.Application.Professionals.GetProfessionalPublicProfile;
 using TuCita.Application.Professionals.LoginProfessional;
 using TuCita.Application.Professionals.RegisterProfessional;
 using TuCita.Application.Professionals.ResendVerificationEmail;
+using TuCita.Application.Professionals.ScheduleExceptions.CreateScheduleException;
+using TuCita.Application.Professionals.ScheduleExceptions.DeleteScheduleException;
+using TuCita.Application.Professionals.ScheduleExceptions.GetScheduleExceptions;
+using TuCita.Application.Professionals.UpdateWorkingSchedule;
 using TuCita.Application.Professionals.VerifyEmail;
 
 namespace TuCita.Application.DependencyInjection;
@@ -34,6 +39,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CompleteAppointmentCommandHandler>();
         services.AddScoped<MarkAppointmentAsNoShowCommandHandler>();
         services.AddScoped<SendDueRemindersCommandHandler>();
+        services.AddScoped<UpdateWorkingScheduleCommandHandler>();
+        services.AddScoped<GetMyWorkingScheduleQueryHandler>();
+        services.AddScoped<CreateScheduleExceptionCommandHandler>();
+        services.AddScoped<GetScheduleExceptionsQueryHandler>();
+        services.AddScoped<DeleteScheduleExceptionCommandHandler>();
 
         return services;
     }

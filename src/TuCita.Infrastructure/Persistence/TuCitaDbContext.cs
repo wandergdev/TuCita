@@ -13,6 +13,8 @@ public sealed class TuCitaDbContext : DbContext
 
     public DbSet<Appointment> Appointments => Set<Appointment>();
 
+    public DbSet<ScheduleException> ScheduleExceptions => Set<ScheduleException>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(TuCitaDbContext).Assembly);

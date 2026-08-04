@@ -12,17 +12,21 @@ public sealed class GetAvailabilityQueryHandler
 {
     private readonly IProfessionalRepository _professionalRepository;
     private readonly IAppointmentRepository _appointmentRepository;
+    private readonly IScheduleExceptionRepository _scheduleExceptionRepository;
     private readonly IDateTimeProvider _dateTimeProvider;
 
     public GetAvailabilityQueryHandler(
         IProfessionalRepository professionalRepository,
         IAppointmentRepository appointmentRepository,
+        IScheduleExceptionRepository scheduleExceptionRepository,
         IDateTimeProvider dateTimeProvider)
     {
         _professionalRepository = professionalRepository
             ?? throw new ArgumentNullException(nameof(professionalRepository));
         _appointmentRepository = appointmentRepository
             ?? throw new ArgumentNullException(nameof(appointmentRepository));
+        _scheduleExceptionRepository = scheduleExceptionRepository
+            ?? throw new ArgumentNullException(nameof(scheduleExceptionRepository));
         _dateTimeProvider = dateTimeProvider
             ?? throw new ArgumentNullException(nameof(dateTimeProvider));
     }
@@ -43,15 +47,24 @@ public sealed class GetAvailabilityQueryHandler
             query.Date,
             cancellationToken);
 
+        var exception = await _scheduleExceptionRepository.GetForDateAsync(
+            professional.Id,
+            query.Date,
+            cancellationToken);
+
         var availableSlots = AvailabilitySlotCalculator.CalculateAvailableSlots(
             professional.WorkingSchedule,
             professional.AppointmentDuration,
             query.Date,
             existingAppointments,
-            _dateTimeProvider.Now);
+            _dateTimeProvider.Now,
+            exception);
 
-        var isWorkingDay = professional.WorkingSchedule.WorksOn(query.Date.DayOfWeek);
+        var isWorkingDay = AvailabilitySlotCalculator.GetEffectiveWorkingHours(
+            professional.WorkingSchedule,
+            query.Date,
+            exception) is not null;
 
-        return new GetAvailabilityResponse(availableSlots, isWorkingDay);
+        return new GetAvailabilityResponse(availableSlots, isWorkingDay, exception?.Message);
     }
 }

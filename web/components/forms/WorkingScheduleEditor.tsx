@@ -1,8 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/cn";
-import { DAY_OPTIONS } from "@/lib/labels";
 import type { DayOfWeek } from "@/types/api";
+import { DaySelector } from "@/components/forms/DaySelector";
+import { LunchBreakFields } from "@/components/forms/LunchBreakFields";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 
@@ -13,6 +13,12 @@ interface WorkingScheduleEditorProps {
   endTime: string;
   onChangeStartTime: (value: string) => void;
   onChangeEndTime: (value: string) => void;
+  lunchBreakEnabled: boolean;
+  onToggleLunchBreak: (enabled: boolean) => void;
+  lunchBreakStartTime: string;
+  lunchBreakEndTime: string;
+  onChangeLunchBreakStartTime: (value: string) => void;
+  onChangeLunchBreakEndTime: (value: string) => void;
   error?: string;
 }
 
@@ -23,39 +29,20 @@ export function WorkingScheduleEditor({
   endTime,
   onChangeStartTime,
   onChangeEndTime,
+  lunchBreakEnabled,
+  onToggleLunchBreak,
+  lunchBreakStartTime,
+  lunchBreakEndTime,
+  onChangeLunchBreakStartTime,
+  onChangeLunchBreakEndTime,
   error,
 }: WorkingScheduleEditorProps) {
-  function toggleDay(day: DayOfWeek) {
-    if (selectedDays.includes(day)) {
-      onChangeDays(selectedDays.filter((d) => d !== day));
-    } else {
-      onChangeDays([...selectedDays, day]);
-    }
-  }
-
   return (
     <div className="flex flex-col gap-3">
       <div>
         <span className="text-sm font-medium text-foreground">Días de trabajo</span>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {DAY_OPTIONS.map((day) => {
-            const active = selectedDays.includes(day.value);
-            return (
-              <button
-                key={day.value}
-                type="button"
-                onClick={() => toggleDay(day.value)}
-                className={cn(
-                  "rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
-                  active
-                    ? "border-accent bg-accent text-accent-foreground"
-                    : "border-border text-foreground hover:bg-muted-background",
-                )}
-              >
-                {day.label}
-              </button>
-            );
-          })}
+        <div className="mt-2">
+          <DaySelector selectedDays={selectedDays} onChangeDays={onChangeDays} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -76,6 +63,15 @@ export function WorkingScheduleEditor({
           />
         </Field>
       </div>
+      <LunchBreakFields
+        idPrefix="registro"
+        enabled={lunchBreakEnabled}
+        onToggle={onToggleLunchBreak}
+        startTime={lunchBreakStartTime}
+        endTime={lunchBreakEndTime}
+        onChangeStartTime={onChangeLunchBreakStartTime}
+        onChangeEndTime={onChangeLunchBreakEndTime}
+      />
       {error && <p className="text-xs text-rose-600">{error}</p>}
     </div>
   );

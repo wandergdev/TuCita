@@ -10,4 +10,6 @@ public interface IIdentifierGenerator
     ProfessionalId NewProfessionalId();
 
     AppointmentId NewAppointmentId();
+
+    ScheduleExceptionId NewScheduleExceptionId();
 }
