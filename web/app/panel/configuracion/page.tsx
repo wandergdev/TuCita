@@ -9,12 +9,15 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
+import { PasswordInput } from "@/components/ui/PasswordInput";
+import { Tabs } from "@/components/ui/Tabs";
 import { LunchBreakFields } from "@/components/forms/LunchBreakFields";
 import { ScheduleRulesEditor, type ScheduleRuleDraft } from "@/components/forms/ScheduleRulesEditor";
 import { getSession } from "@/lib/auth";
 import { formatDateLabel, formatTimeLabel, todayAsDateOnly, toTimeOnlyString } from "@/lib/format";
 import {
   ApiError,
+  changePassword,
   createScheduleException,
   deleteScheduleException,
   getMyWorkingSchedule,
@@ -23,9 +26,17 @@ import {
 } from "@/lib/api";
 import type { AuthSession, ScheduleException, WorkingScheduleRuleRequest } from "@/types/api";
 
+type TabValue = "Horarios" | "Contraseña";
+
+const TAB_ITEMS: { value: TabValue; label: string }[] = [
+  { value: "Horarios", label: "Horarios" },
+  { value: "Contraseña", label: "Contraseña" },
+];
+
 export default function ConfiguracionPage() {
   const router = useRouter();
   const [session, setSessionState] = useState<AuthSession | undefined>(undefined);
+  const [tab, setTab] = useState<TabValue>("Horarios");
   const [exceptionsVersion, setExceptionsVersion] = useState(0);
 
   useEffect(() => {
@@ -47,27 +58,120 @@ export default function ConfiguracionPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-foreground">Configuración</h1>
-            <p className="mt-1 text-sm text-muted">Administra tu horario y días no laborables.</p>
+            <p className="mt-1 text-sm text-muted">Administra tu horario y tu contraseña.</p>
           </div>
           <Link href="/panel">
             <Button variant="outline">Volver</Button>
           </Link>
         </div>
 
-        <div className="mt-6 flex flex-col gap-6">
-          <WorkingScheduleSection token={session.token} />
-          <SpecialDateSection
-            token={session.token}
-            onCreated={() => setExceptionsVersion((v) => v + 1)}
-          />
-          <VacationRangeSection
-            token={session.token}
-            onCreated={() => setExceptionsVersion((v) => v + 1)}
-          />
-          <ScheduleExceptionsSection token={session.token} version={exceptionsVersion} />
+        <div className="mt-6 rounded-lg border border-border bg-surface shadow-sm">
+          <Tabs items={TAB_ITEMS} value={tab} onChange={setTab} />
+
+          <div className="flex flex-col gap-6 p-4">
+            {tab === "Horarios" && (
+              <>
+                <WorkingScheduleSection token={session.token} />
+                <SpecialDateSection
+                  token={session.token}
+                  onCreated={() => setExceptionsVersion((v) => v + 1)}
+                />
+                <VacationRangeSection
+                  token={session.token}
+                  onCreated={() => setExceptionsVersion((v) => v + 1)}
+                />
+                <ScheduleExceptionsSection token={session.token} version={exceptionsVersion} />
+              </>
+            )}
+
+            {tab === "Contraseña" && <ChangePasswordSection token={session.token} />}
+          </div>
         </div>
       </Container>
     </main>
+  );
+}
+
+function ChangePasswordSection({ token }: { token: string }) {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  async function handleSave() {
+    setError(null);
+    setSuccess(false);
+
+    if (newPassword !== confirmPassword) {
+      setError("Las contraseñas no coinciden.");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await changePassword(token, currentPassword, newPassword);
+      setSuccess(true);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No se pudo cambiar la contraseña.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <Card className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-lg font-semibold text-foreground">Cambiar contraseña</h2>
+        <p className="mt-1 text-sm text-muted">
+          Escribe tu contraseña actual y la nueva contraseña que quieres usar.
+        </p>
+      </div>
+
+      {error && <Alert tone="error">{error}</Alert>}
+      {success && <Alert tone="success">Contraseña actualizada.</Alert>}
+
+      <Field label="Contraseña actual" htmlFor="current-password">
+        <PasswordInput
+          id="current-password"
+          value={currentPassword}
+          onChange={(event) => setCurrentPassword(event.target.value)}
+        />
+      </Field>
+      <Field label="Nueva contraseña" htmlFor="new-password">
+        <PasswordInput
+          id="new-password"
+          minLength={8}
+          value={newPassword}
+          onChange={(event) => setNewPassword(event.target.value)}
+        />
+      </Field>
+      <Field label="Confirmar nueva contraseña" htmlFor="confirm-password">
+        <PasswordInput
+          id="confirm-password"
+          minLength={8}
+          value={confirmPassword}
+          onChange={(event) => setConfirmPassword(event.target.value)}
+        />
+      </Field>
+      <Button
+        type="button"
+        disabled={isSaving || !currentPassword || !newPassword || !confirmPassword}
+        onClick={handleSave}
+        className="self-start"
+      >
+        {isSaving ? "Guardando…" : "Cambiar contraseña"}
+      </Button>
+    </Card>
   );
 }
 

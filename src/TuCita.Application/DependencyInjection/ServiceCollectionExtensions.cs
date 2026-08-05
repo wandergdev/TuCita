@@ -7,12 +7,15 @@ using TuCita.Application.Appointments.GetAppointmentStats;
 using TuCita.Application.Appointments.GetProfessionalAppointments;
 using TuCita.Application.Appointments.MarkAppointmentAsNoShow;
 using TuCita.Application.Appointments.SendDueReminders;
+using TuCita.Application.Professionals.ChangePassword;
+using TuCita.Application.Professionals.ForgotPassword;
 using TuCita.Application.Professionals.GetAvailability;
 using TuCita.Application.Professionals.GetMyWorkingSchedule;
 using TuCita.Application.Professionals.GetProfessionalPublicProfile;
 using TuCita.Application.Professionals.LoginProfessional;
 using TuCita.Application.Professionals.RegisterProfessional;
 using TuCita.Application.Professionals.ResendVerificationEmail;
+using TuCita.Application.Professionals.ResetPassword;
 using TuCita.Application.Professionals.ScheduleExceptions.CreateScheduleException;
 using TuCita.Application.Professionals.ScheduleExceptions.DeleteScheduleException;
 using TuCita.Application.Professionals.ScheduleExceptions.GetScheduleExceptions;
@@ -44,6 +47,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<CreateScheduleExceptionCommandHandler>();
         services.AddScoped<GetScheduleExceptionsQueryHandler>();
         services.AddScoped<DeleteScheduleExceptionCommandHandler>();
+        services.AddScoped<ForgotPasswordCommandHandler>();
+        services.AddScoped<ResetPasswordCommandHandler>();
+        services.AddScoped<ChangePasswordCommandHandler>();
 
         return services;
     }

@@ -77,5 +77,14 @@ public sealed class ProfessionalConfiguration : IEntityTypeConfiguration<Profess
         builder.Property(p => p.EmailVerificationTokenExpiresAt)
             .HasConversion<UtcNullableDateTimeConverter>()
             .HasColumnName("email_verification_token_expires_at");
+
+        builder.Property(p => p.PasswordResetToken)
+            .HasColumnName("password_reset_token")
+            .HasMaxLength(64);
+        builder.HasIndex(p => p.PasswordResetToken);
+
+        builder.Property(p => p.PasswordResetTokenExpiresAt)
+            .HasConversion<UtcNullableDateTimeConverter>()
+            .HasColumnName("password_reset_token_expires_at");
     }
 }

@@ -188,4 +188,50 @@ public class ProfessionalTests
         // Assert
         action.Should().Throw<ArgumentNullException>();
     }
+
+    [Fact]
+    public void SetPasswordResetToken_ShouldStoreTokenAndExpiry()
+    {
+        // Arrange
+        var professional = ProfessionalTestData.Create();
+        var expiresAt = new DateTime(2026, 8, 4, 8, 0, 0);
+
+        // Act
+        professional.SetPasswordResetToken("some-token", expiresAt);
+
+        // Assert
+        professional.PasswordResetToken.Should().Be("some-token");
+        professional.PasswordResetTokenExpiresAt.Should().Be(expiresAt);
+    }
+
+    [Fact]
+    public void ResetPassword_ShouldReplaceHashAndClearToken()
+    {
+        // Arrange
+        var professional = ProfessionalTestData.Create();
+        professional.SetPasswordResetToken("some-token", new DateTime(2026, 8, 4, 8, 0, 0));
+
+        // Act
+        professional.ResetPassword("new-hashed-password");
+
+        // Assert
+        professional.PasswordHash.Should().Be("new-hashed-password");
+        professional.PasswordResetToken.Should().BeNull();
+        professional.PasswordResetTokenExpiresAt.Should().BeNull();
+    }
+
+    [Fact]
+    public void ChangePassword_ShouldReplaceHash_WithoutTouchingResetToken()
+    {
+        // Arrange
+        var professional = ProfessionalTestData.Create();
+        professional.SetPasswordResetToken("some-token", new DateTime(2026, 8, 4, 8, 0, 0));
+
+        // Act
+        professional.ChangePassword("new-hashed-password");
+
+        // Assert
+        professional.PasswordHash.Should().Be("new-hashed-password");
+        professional.PasswordResetToken.Should().Be("some-token");
+    }
 }

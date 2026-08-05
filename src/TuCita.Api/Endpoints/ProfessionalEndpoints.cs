@@ -1,12 +1,15 @@
 using System.Security.Claims;
 using TuCita.Api.Contracts.Professionals;
 using TuCita.Application.Appointments.CheckExistingAppointment;
+using TuCita.Application.Professionals.ChangePassword;
+using TuCita.Application.Professionals.ForgotPassword;
 using TuCita.Application.Professionals.GetAvailability;
 using TuCita.Application.Professionals.GetMyWorkingSchedule;
 using TuCita.Application.Professionals.GetProfessionalPublicProfile;
 using TuCita.Application.Professionals.LoginProfessional;
 using TuCita.Application.Professionals.RegisterProfessional;
 using TuCita.Application.Professionals.ResendVerificationEmail;
+using TuCita.Application.Professionals.ResetPassword;
 using TuCita.Application.Professionals.ScheduleExceptions.CreateScheduleException;
 using TuCita.Application.Professionals.ScheduleExceptions.DeleteScheduleException;
 using TuCita.Application.Professionals.ScheduleExceptions.GetScheduleExceptions;
@@ -73,6 +76,28 @@ public static class ProfessionalEndpoints
             CancellationToken cancellationToken) =>
         {
             await handler.HandleAsync(new ResendVerificationEmailCommand(request.Email), cancellationToken);
+
+            return Results.NoContent();
+        });
+
+        group.MapPost("/forgot-password", async (
+            ForgotPasswordRequest request,
+            ForgotPasswordCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            await handler.HandleAsync(new ForgotPasswordCommand(request.Email), cancellationToken);
+
+            return Results.NoContent();
+        });
+
+        group.MapPost("/reset-password", async (
+            ResetPasswordRequest request,
+            ResetPasswordCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            await handler.HandleAsync(
+                new ResetPasswordCommand(request.Token, request.NewPassword),
+                cancellationToken);
 
             return Results.NoContent();
         });
@@ -191,6 +216,22 @@ public static class ProfessionalEndpoints
             await handler.HandleAsync(
                 new DeleteScheduleExceptionCommand(new ScheduleExceptionId(id), GetProfessionalId(user)),
                 cancellationToken);
+
+            return Results.NoContent();
+        });
+
+        meGroup.MapPost("/change-password", async (
+            ChangePasswordRequest request,
+            ClaimsPrincipal user,
+            ChangePasswordCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new ChangePasswordCommand(
+                GetProfessionalId(user),
+                request.CurrentPassword,
+                request.NewPassword);
+
+            await handler.HandleAsync(command, cancellationToken);
 
             return Results.NoContent();
         });

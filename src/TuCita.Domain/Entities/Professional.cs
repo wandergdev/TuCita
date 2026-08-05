@@ -69,6 +69,14 @@ public sealed class Professional : Entity<ProfessionalId>
 
     public DateTime? EmailVerificationTokenExpiresAt { get; private set; }
 
+    /// <summary>
+    /// Token de un solo uso enviado por correo para restablecer la
+    /// contraseña olvidada. Null cuando no hay un reseteo en curso.
+    /// </summary>
+    public string? PasswordResetToken { get; private set; }
+
+    public DateTime? PasswordResetTokenExpiresAt { get; private set; }
+
     private Professional(
         ProfessionalId id,
         string fullName,
@@ -158,5 +166,44 @@ public sealed class Professional : Entity<ProfessionalId>
     public void UpdateWorkingSchedule(WorkingSchedule workingSchedule)
     {
         WorkingSchedule = workingSchedule ?? throw new ArgumentNullException(nameof(workingSchedule));
+    }
+
+    /// <summary>
+    /// Genera un nuevo token para restablecer la contraseña, invalidando
+    /// cualquier token anterior (permite reenviar el correo).
+    /// </summary>
+    public void SetPasswordResetToken(string token, DateTime expiresAt)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            throw new ArgumentException("El token de reseteo es obligatorio.", nameof(token));
+
+        PasswordResetToken = token;
+        PasswordResetTokenExpiresAt = expiresAt;
+    }
+
+    /// <summary>
+    /// Establece una nueva contraseña a partir de un token de reseteo
+    /// válido, invalidando el token usado.
+    /// </summary>
+    public void ResetPassword(string newPasswordHash)
+    {
+        if (string.IsNullOrWhiteSpace(newPasswordHash))
+            throw new ArgumentException("El hash de la contraseña es obligatorio.", nameof(newPasswordHash));
+
+        PasswordHash = newPasswordHash;
+        PasswordResetToken = null;
+        PasswordResetTokenExpiresAt = null;
+    }
+
+    /// <summary>
+    /// Establece una nueva contraseña estando autenticado (tras verificar
+    /// la contraseña actual).
+    /// </summary>
+    public void ChangePassword(string newPasswordHash)
+    {
+        if (string.IsNullOrWhiteSpace(newPasswordHash))
+            throw new ArgumentException("El hash de la contraseña es obligatorio.", nameof(newPasswordHash));
+
+        PasswordHash = newPasswordHash;
     }
 }

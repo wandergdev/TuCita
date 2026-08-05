@@ -108,6 +108,13 @@ export default function LoginPage() {
                 />
               </Field>
 
+              <Link
+                href="/olvide-password"
+                className="-mt-3 self-end text-sm font-medium text-accent hover:text-accent-hover"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Entrando…" : "Entrar"}
               </Button>

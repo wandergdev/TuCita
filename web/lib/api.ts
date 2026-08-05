@@ -165,6 +165,32 @@ export async function resendVerificationEmail(email: string): Promise<void> {
   });
 }
 
+export async function forgotPassword(email: string): Promise<void> {
+  await apiFetch<void>("/api/professionals/forgot-password", {
+    method: "POST",
+    body: { email },
+  });
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+  await apiFetch<void>("/api/professionals/reset-password", {
+    method: "POST",
+    body: { token, newPassword },
+  });
+}
+
+export async function changePassword(
+  token: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  await apiFetch<void>("/api/professionals/me/change-password", {
+    method: "POST",
+    body: { currentPassword, newPassword },
+    token,
+  });
+}
+
 export async function getProfessionalProfile(slug: string): Promise<ProfessionalPublicProfile | null> {
   try {
     return await apiFetch<ProfessionalPublicProfile>(`/api/professionals/${encodeURIComponent(slug)}`);

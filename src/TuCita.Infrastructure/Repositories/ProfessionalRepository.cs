@@ -38,6 +38,12 @@ public sealed class ProfessionalRepository : IProfessionalRepository
         => _dbContext.Professionals.FirstOrDefaultAsync(
             p => p.EmailVerificationToken == token, cancellationToken);
 
+    public Task<Professional?> GetByPasswordResetTokenAsync(
+        string token,
+        CancellationToken cancellationToken = default)
+        => _dbContext.Professionals.FirstOrDefaultAsync(
+            p => p.PasswordResetToken == token, cancellationToken);
+
     public Task<bool> ExistsBySlugAsync(
         string slug,
         CancellationToken cancellationToken = default)

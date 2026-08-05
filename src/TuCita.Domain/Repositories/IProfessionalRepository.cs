@@ -21,6 +21,10 @@ public interface IProfessionalRepository
         string token,
         CancellationToken cancellationToken = default);
 
+    Task<Professional?> GetByPasswordResetTokenAsync(
+        string token,
+        CancellationToken cancellationToken = default);
+
     Task<bool> ExistsBySlugAsync(
         string slug,
         CancellationToken cancellationToken = default);

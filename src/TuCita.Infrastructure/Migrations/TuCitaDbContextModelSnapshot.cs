@@ -124,6 +124,15 @@ namespace TuCita.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("PasswordResetToken")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("password_reset_token");
+
+                    b.Property<DateTime?>("PasswordResetTokenExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("password_reset_token_expires_at");
+
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -147,6 +156,8 @@ namespace TuCita.Infrastructure.Migrations
                         .IsUnique();
 
                     b.HasIndex("EmailVerificationToken");
+
+                    b.HasIndex("PasswordResetToken");
 
                     b.HasIndex("Slug")
                         .IsUnique();
