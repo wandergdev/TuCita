@@ -10,15 +10,19 @@ public sealed class GetPendingPortfolioPhotosQueryHandler
 {
     private readonly IPortfolioPhotoRepository _portfolioPhotoRepository;
     private readonly IProfessionalRepository _professionalRepository;
+    private readonly IBusinessRepository _businessRepository;
 
     public GetPendingPortfolioPhotosQueryHandler(
         IPortfolioPhotoRepository portfolioPhotoRepository,
-        IProfessionalRepository professionalRepository)
+        IProfessionalRepository professionalRepository,
+        IBusinessRepository businessRepository)
     {
         _portfolioPhotoRepository = portfolioPhotoRepository
             ?? throw new ArgumentNullException(nameof(portfolioPhotoRepository));
         _professionalRepository = professionalRepository
             ?? throw new ArgumentNullException(nameof(professionalRepository));
+        _businessRepository = businessRepository
+            ?? throw new ArgumentNullException(nameof(businessRepository));
     }
 
     public async Task<GetPendingPortfolioPhotosResponse> HandleAsync(
@@ -34,6 +38,15 @@ public sealed class GetPendingPortfolioPhotosQueryHandler
         {
             var professional = await _professionalRepository.GetByIdAsync(photo.ProfessionalId, cancellationToken);
 
+            string? businessName = null;
+            string? businessSlug = null;
+            if (professional?.BusinessId is { } businessId)
+            {
+                var business = await _businessRepository.GetByIdAsync(businessId, cancellationToken);
+                businessName = business?.Name;
+                businessSlug = business?.Slug.Value;
+            }
+
             summaries.Add(new PendingPortfolioPhotoSummary(
                 photo.Id,
                 photo.ImageUrl,
@@ -41,7 +54,10 @@ public sealed class GetPendingPortfolioPhotosQueryHandler
                 photo.CreatedAt,
                 photo.ProfessionalId,
                 professional?.FullName ?? "(profesional eliminado)",
-                professional?.Slug.Value ?? ""));
+                professional?.Slug.Value ?? "",
+                professional?.Category ?? default,
+                businessName,
+                businessSlug));
         }
 
         return new GetPendingPortfolioPhotosResponse(summaries);

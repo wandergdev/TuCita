@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { ShareLinkCard } from "@/components/dashboard/ShareLinkCard";
 import { CATEGORY_LABELS } from "@/lib/labels";
 import { SITE_DOMAIN } from "@/lib/site";
 import { clearSession, getSession } from "@/lib/auth";
@@ -187,6 +188,8 @@ export default function PanelNegocioPage() {
 
         <BusinessPhotosSection token={session.token} />
       </Container>
+
+      <ShareLinkCard slug={session.slug} />
     </main>
   );
 }

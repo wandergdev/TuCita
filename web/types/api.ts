@@ -120,6 +120,9 @@ export interface AdminPendingPhoto {
   professionalId: string;
   professionalFullName: string;
   professionalSlug: string;
+  professionalCategory: Category;
+  businessName: string | null;
+  businessSlug: string | null;
 }
 
 export type BusinessPhotoKind = "Cover" | "Space";

@@ -1,3 +1,4 @@
+using TuCita.Domain.Enums;
 using TuCita.Domain.Identifiers;
 
 namespace TuCita.Application.Admin.Portfolio.GetPendingPortfolioPhotos;
@@ -9,4 +10,7 @@ public sealed record PendingPortfolioPhotoSummary(
     DateTime CreatedAt,
     ProfessionalId ProfessionalId,
     string ProfessionalFullName,
-    string ProfessionalSlug);
+    string ProfessionalSlug,
+    Category ProfessionalCategory,
+    string? BusinessName,
+    string? BusinessSlug);
