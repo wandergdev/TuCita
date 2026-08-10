@@ -49,7 +49,7 @@ export default function Home() {
             </p>
             <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
               <Link
-                href="/registro"
+                href="/comenzar"
                 className="rounded-md bg-accent px-5 py-2.5 text-center text-sm font-medium text-accent-foreground hover:bg-accent-hover"
               >
                 Registrar mi negocio

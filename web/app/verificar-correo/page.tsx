@@ -10,13 +10,20 @@ import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { ApiError, resendVerificationEmail, verifyEmail } from "@/lib/api";
+import {
+  ApiError,
+  resendBusinessVerificationEmail,
+  resendVerificationEmail,
+  verifyBusinessEmail,
+  verifyEmail,
+} from "@/lib/api";
 
 type Status = "verifying" | "success" | "error" | "missing-token";
 
 function VerificarCorreoContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const isBusiness = searchParams.get("type") === "business";
 
   const [status, setStatus] = useState<Status>(token ? "verifying" : "missing-token");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -30,7 +37,7 @@ function VerificarCorreoContent() {
 
     let cancelled = false;
 
-    verifyEmail(token)
+    (isBusiness ? verifyBusinessEmail(token) : verifyEmail(token))
       .then(() => {
         if (!cancelled) setStatus("success");
       })
@@ -45,13 +52,15 @@ function VerificarCorreoContent() {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, isBusiness]);
 
   async function handleResend(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsResending(true);
     try {
-      await resendVerificationEmail(resendEmail);
+      await (isBusiness
+        ? resendBusinessVerificationEmail(resendEmail)
+        : resendVerificationEmail(resendEmail));
       setResendSent(true);
     } catch {
       setResendSent(true);

@@ -12,4 +12,12 @@ public interface IIdentifierGenerator
     AppointmentId NewAppointmentId();
 
     ScheduleExceptionId NewScheduleExceptionId();
+
+    BusinessId NewBusinessId();
+
+    BusinessInviteId NewBusinessInviteId();
+
+    PortfolioPhotoId NewPortfolioPhotoId();
+
+    BusinessPhotoId NewBusinessPhotoId();
 }

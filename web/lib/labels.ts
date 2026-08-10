@@ -7,6 +7,19 @@ export const CATEGORY_LABELS: Record<Category, string> = {
   Psychologist: "Psicólogo/a",
 };
 
+/**
+ * Texto del hero de la página pública de un negocio, según la categoría
+ * del primer profesional de su equipo (ver [slug]/page.tsx).
+ */
+export const CATEGORY_TAGLINES: Record<Category, string> = {
+  Barber: "Corte perfecto, sin filas ni llamadas: reserva tu cita en segundos.",
+  Stylist: "Tu próximo look te espera. Reserva tu cita con nuestro equipo en segundos.",
+  Dentist: "Cuida tu sonrisa sin complicaciones. Agenda tu cita dental cuando quieras.",
+  Psychologist: "Date el espacio que mereces. Agenda tu sesión de forma fácil y privada.",
+};
+
+export const DEFAULT_HERO_TAGLINE = "Reserva tu cita en segundos, sin llamadas ni esperas.";
+
 export const STATUS_LABELS: Record<AppointmentStatus, string> = {
   Scheduled: "Programada",
   Completed: "Completada",

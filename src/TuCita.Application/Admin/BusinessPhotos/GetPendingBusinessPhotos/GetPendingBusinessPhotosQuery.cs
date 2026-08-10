@@ -1,0 +1,3 @@
+namespace TuCita.Application.Admin.BusinessPhotos.GetPendingBusinessPhotos;
+
+public sealed record GetPendingBusinessPhotosQuery;

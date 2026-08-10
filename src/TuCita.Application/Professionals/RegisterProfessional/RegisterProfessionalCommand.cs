@@ -15,4 +15,5 @@ public sealed record RegisterProfessionalCommand(
     Category Category,
     int AppointmentDuration,
     WorkingSchedule WorkingSchedule,
-    string Password);
+    string Password,
+    string? InviteToken = null);

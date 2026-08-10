@@ -36,7 +36,7 @@ public static class AppointmentEndpoints
 
         var group = app.MapGroup("/api/appointments")
             .WithTags("Appointments")
-            .RequireAuthorization();
+            .RequireAuthorization("ProfessionalOnly");
 
         group.MapGet("/mine", async (
             ClaimsPrincipal user,

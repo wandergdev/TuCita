@@ -77,6 +77,13 @@ public sealed class Professional : Entity<ProfessionalId>
 
     public DateTime? PasswordResetTokenExpiresAt { get; private set; }
 
+    /// <summary>
+    /// Negocio al que pertenece este profesional (ej. la peluquería donde
+    /// trabaja). Null si opera de forma independiente. Su página y horario
+    /// públicos siguen funcionando igual en ambos casos.
+    /// </summary>
+    public BusinessId? BusinessId { get; private set; }
+
     private Professional(
         ProfessionalId id,
         string fullName,
@@ -205,5 +212,19 @@ public sealed class Professional : Entity<ProfessionalId>
             throw new ArgumentException("El hash de la contraseña es obligatorio.", nameof(newPasswordHash));
 
         PasswordHash = newPasswordHash;
+    }
+
+    /// <summary>
+    /// Asocia al profesional con un negocio (ej. al registrarse mediante
+    /// una invitación). Solo puede hacerse una vez.
+    /// </summary>
+    public void JoinBusiness(BusinessId businessId)
+    {
+        ArgumentNullException.ThrowIfNull(businessId);
+
+        if (BusinessId is not null)
+            throw new InvalidOperationException("El profesional ya pertenece a un negocio.");
+
+        BusinessId = businessId;
     }
 }

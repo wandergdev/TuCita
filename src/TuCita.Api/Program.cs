@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -6,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using TuCita.Api.Endpoints;
 using TuCita.Api.Middleware;
+using TuCita.Application.Common;
 using TuCita.Application.DependencyInjection;
 using TuCita.Infrastructure.DependencyInjection;
 using TuCita.Infrastructure.Options;
@@ -70,7 +72,15 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("ProfessionalOnly", policy =>
+        policy.RequireClaim(ClaimTypes.Role, AccountTypeClaims.Professional));
+    options.AddPolicy("BusinessOnly", policy =>
+        policy.RequireClaim(ClaimTypes.Role, AccountTypeClaims.Business));
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireClaim(ClaimTypes.Role, AccountTypeClaims.Admin));
+});
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -94,5 +104,7 @@ app.UseAuthorization();
 
 app.MapProfessionalEndpoints();
 app.MapAppointmentEndpoints();
+app.MapBusinessEndpoints();
+app.MapAdminEndpoints();
 
 app.Run();

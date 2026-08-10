@@ -9,7 +9,7 @@ import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { forgotPassword } from "@/lib/api";
+import { forgotBusinessPassword, forgotPassword } from "@/lib/api";
 
 export default function OlvidePasswordPage() {
   const [email, setEmail] = useState("");
@@ -19,12 +19,14 @@ export default function OlvidePasswordPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
-    try {
-      await forgotPassword(email);
-    } finally {
-      setIsSubmitting(false);
-      setSent(true);
-    }
+    // No sabemos si esta cuenta es de profesional o de negocio (y no lo
+    // preguntamos): probamos las dos vías, y cualquiera de las dos que
+    // encuentre el correo manda el enlace. La respuesta al usuario es la
+    // misma sin importar cuál coincidió, para no revelar qué tipo de
+    // cuenta existe con ese correo.
+    await Promise.allSettled([forgotPassword(email), forgotBusinessPassword(email)]);
+    setIsSubmitting(false);
+    setSent(true);
   }
 
   return (

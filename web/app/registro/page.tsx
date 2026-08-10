@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Container } from "@/components/ui/Container";
@@ -14,14 +15,20 @@ import { Alert } from "@/components/ui/Alert";
 import { WorkingScheduleEditor } from "@/components/forms/WorkingScheduleEditor";
 import { CATEGORY_LABELS } from "@/lib/labels";
 import { toTimeOnlyString } from "@/lib/format";
-import { ApiError, registerProfessional } from "@/lib/api";
+import { ApiError, getBusinessInvite, registerProfessional } from "@/lib/api";
 import { sanitizePhoneInput } from "@/lib/phone";
 import { sanitizeSlugInput } from "@/lib/slug";
 import type { Category, DayOfWeek } from "@/types/api";
 
 const DURATION_OPTIONS = [30, 45, 60, 90];
 
-export default function RegistroPage() {
+function RegistroContent() {
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get("invite");
+
+  const [businessName, setBusinessName] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -40,6 +47,28 @@ export default function RegistroPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
+
+  useEffect(() => {
+    if (!inviteToken) return;
+
+    let cancelled = false;
+
+    getBusinessInvite(inviteToken)
+      .then((info) => {
+        if (!cancelled) setBusinessName(info.businessName);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setInviteError(
+            err instanceof ApiError ? err.message : "El enlace de invitación no es válido.",
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [inviteToken]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -74,6 +103,7 @@ export default function RegistroPage() {
           },
         ],
         password,
+        inviteToken: inviteToken ?? undefined,
       });
       setIsRegistered(true);
     } catch (err) {
@@ -114,10 +144,23 @@ export default function RegistroPage() {
       <SiteHeader />
       <main className="flex-1 py-12">
         <Container>
-          <h1 className="text-2xl font-semibold text-foreground">Registra tu negocio</h1>
+          <h1 className="text-2xl font-semibold text-foreground">
+            {inviteToken ? "Únete como profesional" : "Registra tu negocio"}
+          </h1>
           <p className="mt-1 text-sm text-muted">
             Completa tus datos para obtener tu página pública de reservas.
           </p>
+
+          {inviteToken && businessName && (
+            <Alert tone="success" className="mt-4">
+              Te unes a <strong>{businessName}</strong>.
+            </Alert>
+          )}
+          {inviteToken && inviteError && (
+            <Alert tone="error" className="mt-4">
+              {inviteError}
+            </Alert>
+          )}
 
           <Card className="mt-6">
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -252,5 +295,13 @@ export default function RegistroPage() {
         </Container>
       </main>
     </>
+  );
+}
+
+export default function RegistroPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegistroContent />
+    </Suspense>
   );
 }

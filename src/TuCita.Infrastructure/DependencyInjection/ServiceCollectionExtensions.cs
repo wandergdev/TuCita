@@ -40,9 +40,20 @@ public static class ServiceCollectionExtensions
         services.AddOptions<ReminderPollingOptions>()
             .Bind(configuration.GetSection(ReminderPollingOptions.SectionName));
 
+        services.AddOptions<CloudinaryOptions>()
+            .Bind(configuration.GetSection(CloudinaryOptions.SectionName));
+
+        services.AddOptions<AdminOptions>()
+            .Bind(configuration.GetSection(AdminOptions.SectionName));
+
         services.AddScoped<IProfessionalRepository, ProfessionalRepository>();
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
         services.AddScoped<IScheduleExceptionRepository, ScheduleExceptionRepository>();
+        services.AddScoped<IBusinessRepository, BusinessRepository>();
+        services.AddScoped<IBusinessInviteRepository, BusinessInviteRepository>();
+        services.AddScoped<IPortfolioPhotoRepository, PortfolioPhotoRepository>();
+        services.AddScoped<IBusinessPhotoRepository, BusinessPhotoRepository>();
+        services.AddSingleton<IObjectStorageService, CloudinaryObjectStorageService>();
         services.AddSingleton<IIdentifierGenerator, UlidGenerator>();
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
         services.AddScoped<IAuthTokenGenerator, JwtTokenGenerator>();

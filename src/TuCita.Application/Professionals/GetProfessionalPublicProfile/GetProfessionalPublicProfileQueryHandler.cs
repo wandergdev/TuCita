@@ -9,11 +9,16 @@ namespace TuCita.Application.Professionals.GetProfessionalPublicProfile;
 public sealed class GetProfessionalPublicProfileQueryHandler
 {
     private readonly IProfessionalRepository _professionalRepository;
+    private readonly IPortfolioPhotoRepository _portfolioPhotoRepository;
 
-    public GetProfessionalPublicProfileQueryHandler(IProfessionalRepository professionalRepository)
+    public GetProfessionalPublicProfileQueryHandler(
+        IProfessionalRepository professionalRepository,
+        IPortfolioPhotoRepository portfolioPhotoRepository)
     {
         _professionalRepository = professionalRepository
             ?? throw new ArgumentNullException(nameof(professionalRepository));
+        _portfolioPhotoRepository = portfolioPhotoRepository
+            ?? throw new ArgumentNullException(nameof(portfolioPhotoRepository));
     }
 
     public async Task<GetProfessionalPublicProfileResponse> HandleAsync(
@@ -27,10 +32,19 @@ public sealed class GetProfessionalPublicProfileQueryHandler
         if (professional is null || !professional.IsActive)
             throw new NotFoundException("El profesional solicitado no existe.");
 
+        var approvedPhotos = await _portfolioPhotoRepository.GetApprovedByProfessionalIdAsync(
+            professional.Id,
+            cancellationToken);
+
+        var photos = approvedPhotos
+            .Select(p => new PortfolioPhotoPublicSummary(p.ImageUrl, p.Caption))
+            .ToList();
+
         return new GetProfessionalPublicProfileResponse(
             professional.FullName,
             professional.Slug.Value,
             professional.Category,
-            professional.AppointmentDuration.Minutes);
+            professional.AppointmentDuration.Minutes,
+            photos);
     }
 }

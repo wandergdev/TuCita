@@ -1,12 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Container } from "@/components/ui/Container";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
+import { Badge } from "@/components/ui/Badge";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
@@ -17,21 +20,47 @@ import { getSession } from "@/lib/auth";
 import { formatDateLabel, formatTimeLabel, todayAsDateOnly, toTimeOnlyString } from "@/lib/format";
 import {
   ApiError,
+  addPortfolioPhoto,
   changePassword,
   createScheduleException,
+  deletePortfolioPhoto,
   deleteScheduleException,
+  getMyPortfolio,
   getMyWorkingSchedule,
+  getPortfolioUploadSignature,
   getScheduleExceptions,
   updateWorkingSchedule,
+  uploadToCloudinary,
 } from "@/lib/api";
-import type { AuthSession, ScheduleException, WorkingScheduleRuleRequest } from "@/types/api";
+import type {
+  AuthSession,
+  PortfolioPhoto,
+  PortfolioPhotoStatus,
+  ScheduleException,
+  WorkingScheduleRuleRequest,
+} from "@/types/api";
 
-type TabValue = "Horarios" | "Contraseña";
+type TabValue = "Horarios" | "Portafolio" | "Contraseña";
 
 const TAB_ITEMS: { value: TabValue; label: string }[] = [
   { value: "Horarios", label: "Horarios" },
+  { value: "Portafolio", label: "Portafolio" },
   { value: "Contraseña", label: "Contraseña" },
 ];
+
+const MAX_PORTFOLIO_PHOTOS = 2;
+
+const PORTFOLIO_STATUS_LABELS: Record<PortfolioPhotoStatus, string> = {
+  Pending: "Pendiente",
+  Approved: "Aprobada",
+  Rejected: "Rechazada",
+};
+
+const PORTFOLIO_STATUS_CLASSES: Record<PortfolioPhotoStatus, string> = {
+  Pending: "bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+  Approved: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  Rejected: "bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
+};
 
 export default function ConfiguracionPage() {
   const router = useRouter();
@@ -84,11 +113,133 @@ export default function ConfiguracionPage() {
               </>
             )}
 
+            {tab === "Portafolio" && <PortfolioSection token={session.token} />}
+
             {tab === "Contraseña" && <ChangePasswordSection token={session.token} />}
           </div>
         </div>
       </Container>
     </main>
+  );
+}
+
+function PortfolioSection({ token }: { token: string }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [photos, setPhotos] = useState<PortfolioPhoto[] | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    getMyPortfolio(token)
+      .then(setPhotos)
+      .catch((err) =>
+        setError(err instanceof ApiError ? err.message : "No se pudo cargar tu portafolio."),
+      );
+  }, [token]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setError(null);
+    setIsUploading(true);
+    try {
+      const signature = await getPortfolioUploadSignature(token);
+      const { imageUrl, publicId } = await uploadToCloudinary(signature, file);
+      await addPortfolioPhoto(token, imageUrl, publicId);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No se pudo subir la foto.");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setBusyId(id);
+    setError(null);
+    try {
+      await deletePortfolioPhoto(token, id);
+      load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No se pudo eliminar la foto.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const atLimit = (photos?.length ?? 0) >= MAX_PORTFOLIO_PHOTOS;
+
+  return (
+    <Card className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-lg font-semibold text-foreground">Portafolio</h2>
+        <p className="mt-1 text-sm text-muted">
+          Sube fotos de tu trabajo (hasta {MAX_PORTFOLIO_PHOTOS}). Cada foto se revisa antes de
+          publicarse en tu página pública.
+        </p>
+      </div>
+
+      {error && <Alert tone="error">{error}</Alert>}
+
+      <div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+        <Button
+          type="button"
+          disabled={isUploading || atLimit}
+          onClick={() => fileInputRef.current?.click()}
+          className="self-start"
+        >
+          {isUploading ? "Subiendo…" : atLimit ? "Alcanzaste el límite de fotos" : "Subir foto"}
+        </Button>
+      </div>
+
+      {photos === null && <p className="text-sm text-muted">Cargando…</p>}
+      {photos !== null && photos.length === 0 && (
+        <p className="text-sm text-muted">Todavía no has subido fotos.</p>
+      )}
+
+      {photos && photos.length > 0 && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {photos.map((photo) => (
+            <div key={photo.id} className="flex flex-col gap-2 rounded-md border border-border p-2">
+              <div className="relative aspect-square overflow-hidden rounded-md bg-muted-background">
+                <Image
+                  src={photo.imageUrl}
+                  alt={photo.caption ?? "Foto del portafolio"}
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 640px) 200px, 45vw"
+                />
+              </div>
+              <Badge className={PORTFOLIO_STATUS_CLASSES[photo.status]}>
+                {PORTFOLIO_STATUS_LABELS[photo.status]}
+              </Badge>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busyId === photo.id}
+                onClick={() => handleDelete(photo.id)}
+              >
+                Eliminar
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
   );
 }
 

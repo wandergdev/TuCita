@@ -14,7 +14,7 @@ export function SiteHeader() {
             Iniciar sesión
           </Link>
           <Link
-            href="/registro"
+            href="/comenzar"
             className="rounded-md bg-accent px-2.5 py-1.5 font-medium text-accent-foreground hover:bg-accent-hover sm:px-3"
           >
             <span className="hidden sm:inline">Registrar mi negocio</span>

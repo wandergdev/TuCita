@@ -10,4 +10,7 @@ public sealed record GetProfessionalPublicProfileResponse(
     string FullName,
     string Slug,
     Category Category,
-    int AppointmentDurationMinutes);
+    int AppointmentDurationMinutes,
+    IReadOnlyCollection<PortfolioPhotoPublicSummary> Photos);
+
+public sealed record PortfolioPhotoPublicSummary(string ImageUrl, string? Caption);

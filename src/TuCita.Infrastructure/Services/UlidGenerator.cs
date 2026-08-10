@@ -14,4 +14,16 @@ public sealed class UlidGenerator : IIdentifierGenerator
 
     public ScheduleExceptionId NewScheduleExceptionId()
         => new(Ulid.NewUlid().ToString());
+
+    public BusinessId NewBusinessId()
+        => new(Ulid.NewUlid().ToString());
+
+    public BusinessInviteId NewBusinessInviteId()
+        => new(Ulid.NewUlid().ToString());
+
+    public PortfolioPhotoId NewPortfolioPhotoId()
+        => new(Ulid.NewUlid().ToString());
+
+    public BusinessPhotoId NewBusinessPhotoId()
+        => new(Ulid.NewUlid().ToString());
 }

@@ -10,7 +10,8 @@ public sealed record RegisterProfessionalRequest(
     Category Category,
     int AppointmentDurationMinutes,
     List<WorkingScheduleRuleRequest> WorkingSchedule,
-    string Password);
+    string Password,
+    string? InviteToken = null);
 
 public sealed record WorkingScheduleRuleRequest(
     List<DayOfWeek> Days,

@@ -234,4 +234,32 @@ public class ProfessionalTests
         professional.PasswordHash.Should().Be("new-hashed-password");
         professional.PasswordResetToken.Should().Be("some-token");
     }
+
+    [Fact]
+    public void JoinBusiness_ShouldSetBusinessId()
+    {
+        // Arrange
+        var professional = ProfessionalTestData.Create();
+        var businessId = new BusinessId("business-001");
+
+        // Act
+        professional.JoinBusiness(businessId);
+
+        // Assert
+        professional.BusinessId.Should().Be(businessId);
+    }
+
+    [Fact]
+    public void JoinBusiness_ShouldThrowException_WhenAlreadyBelongsToABusiness()
+    {
+        // Arrange
+        var professional = ProfessionalTestData.Create();
+        professional.JoinBusiness(new BusinessId("business-001"));
+
+        // Act
+        Action action = () => professional.JoinBusiness(new BusinessId("business-002"));
+
+        // Assert
+        action.Should().Throw<InvalidOperationException>();
+    }
 }

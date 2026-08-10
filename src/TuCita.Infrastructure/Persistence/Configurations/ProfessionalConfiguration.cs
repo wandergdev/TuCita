@@ -86,5 +86,13 @@ public sealed class ProfessionalConfiguration : IEntityTypeConfiguration<Profess
         builder.Property(p => p.PasswordResetTokenExpiresAt)
             .HasConversion<UtcNullableDateTimeConverter>()
             .HasColumnName("password_reset_token_expires_at");
+
+        builder.Property(p => p.BusinessId)
+            .HasConversion(
+                id => id == null ? null : id.Value,
+                value => value == null ? null : new BusinessId(value))
+            .HasColumnName("business_id")
+            .HasMaxLength(26);
+        builder.HasIndex(p => p.BusinessId);
     }
 }

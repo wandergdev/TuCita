@@ -10,7 +10,7 @@ import { Field } from "@/components/ui/Field";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
-import { ApiError, resetPassword } from "@/lib/api";
+import { ApiError, resetBusinessPassword, resetPassword } from "@/lib/api";
 
 function RestablecerPasswordContent() {
   const searchParams = useSearchParams();
@@ -32,11 +32,38 @@ function RestablecerPasswordContent() {
     }
 
     setIsSubmitting(true);
+
+    // El token no dice si la cuenta es de profesional o de negocio.
+    // Probamos primero como profesional; solo si el token no le
+    // pertenece a ningún profesional (404) probamos como negocio. Si el
+    // token sí le pertenece pero está vencido o hay otro error, ese es
+    // el mensaje correcto y no hace falta seguir probando.
     try {
       await resetPassword(token!, newPassword);
       setSuccess(true);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "No se pudo restablecer tu contraseña.");
+      setIsSubmitting(false);
+      return;
+    } catch (professionalError) {
+      if (!(professionalError instanceof ApiError) || professionalError.status !== 404) {
+        setError(
+          professionalError instanceof ApiError
+            ? professionalError.message
+            : "No se pudo restablecer tu contraseña.",
+        );
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    try {
+      await resetBusinessPassword(token!, newPassword);
+      setSuccess(true);
+    } catch (businessError) {
+      setError(
+        businessError instanceof ApiError
+          ? businessError.message
+          : "No se pudo restablecer tu contraseña.",
+      );
     } finally {
       setIsSubmitting(false);
     }

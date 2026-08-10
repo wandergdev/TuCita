@@ -1,0 +1,5 @@
+using TuCita.Domain.Identifiers;
+
+namespace TuCita.Application.Admin.BusinessPhotos.CreateAdminBusinessPhotoUploadSignature;
+
+public sealed record CreateAdminBusinessPhotoUploadSignatureQuery(BusinessPhotoId BusinessPhotoId);

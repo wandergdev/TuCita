@@ -44,6 +44,14 @@ public sealed class ProfessionalRepository : IProfessionalRepository
         => _dbContext.Professionals.FirstOrDefaultAsync(
             p => p.PasswordResetToken == token, cancellationToken);
 
+    public async Task<IReadOnlyCollection<Professional>> GetByBusinessIdAsync(
+        BusinessId businessId,
+        CancellationToken cancellationToken = default)
+        => await _dbContext.Professionals
+            .Where(p => p.BusinessId == businessId && p.IsActive)
+            .OrderBy(p => p.FullName)
+            .ToListAsync(cancellationToken);
+
     public Task<bool> ExistsBySlugAsync(
         string slug,
         CancellationToken cancellationToken = default)

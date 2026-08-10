@@ -18,6 +18,8 @@ public sealed class RegisterProfessionalCommandHandler
     private static readonly TimeSpan VerificationTokenLifetime = TimeSpan.FromHours(24);
 
     private readonly IProfessionalRepository _professionalRepository;
+    private readonly IBusinessRepository _businessRepository;
+    private readonly IBusinessInviteRepository _businessInviteRepository;
     private readonly IIdentifierGenerator _identifierGenerator;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IEmailSender _emailSender;
@@ -27,6 +29,8 @@ public sealed class RegisterProfessionalCommandHandler
 
     public RegisterProfessionalCommandHandler(
         IProfessionalRepository professionalRepository,
+        IBusinessRepository businessRepository,
+        IBusinessInviteRepository businessInviteRepository,
         IIdentifierGenerator identifierGenerator,
         IPasswordHasher passwordHasher,
         IEmailSender emailSender,
@@ -36,6 +40,10 @@ public sealed class RegisterProfessionalCommandHandler
     {
         _professionalRepository = professionalRepository
                                   ?? throw new ArgumentNullException(nameof(professionalRepository));
+        _businessRepository = businessRepository
+            ?? throw new ArgumentNullException(nameof(businessRepository));
+        _businessInviteRepository = businessInviteRepository
+            ?? throw new ArgumentNullException(nameof(businessInviteRepository));
         _identifierGenerator = identifierGenerator
             ?? throw new ArgumentNullException(nameof(identifierGenerator));
         _passwordHasher = passwordHasher
@@ -57,13 +65,21 @@ public sealed class RegisterProfessionalCommandHandler
 
         var slug = Slug.Create(command.Slug);
 
-        var slugExists = await _professionalRepository.ExistsBySlugAsync(
-            slug.Value,
-            cancellationToken);
+        var slugExists = await _professionalRepository.ExistsBySlugAsync(slug.Value, cancellationToken)
+            || await _businessRepository.ExistsBySlugAsync(slug.Value, cancellationToken);
 
         if (slugExists)
             throw new InvalidOperationException(
                 "El slug ya se encuentra registrado.");
+
+        BusinessInvite? invite = null;
+        if (!string.IsNullOrWhiteSpace(command.InviteToken))
+        {
+            invite = await _businessInviteRepository.GetByTokenAsync(command.InviteToken, cancellationToken);
+
+            if (invite is null || !invite.IsValid(_dateTimeProvider.Now))
+                throw new ArgumentException("La invitación no es válida o ya venció.");
+        }
 
         var professional = Professional.Create(
             _identifierGenerator.NewProfessionalId(),
@@ -76,6 +92,9 @@ public sealed class RegisterProfessionalCommandHandler
             command.WorkingSchedule,
             _passwordHasher.Hash(command.Password));
 
+        if (invite is not null)
+            professional.JoinBusiness(invite.BusinessId);
+
         var verificationToken = Guid.NewGuid().ToString("N");
         professional.SetEmailVerificationToken(
             verificationToken,
@@ -84,6 +103,12 @@ public sealed class RegisterProfessionalCommandHandler
         await _professionalRepository.AddAsync(
             professional,
             cancellationToken);
+
+        if (invite is not null)
+        {
+            invite.Consume(_dateTimeProvider.Now);
+            await _businessInviteRepository.UpdateAsync(invite, cancellationToken);
+        }
 
         await SendVerificationEmailAsync(professional, verificationToken, cancellationToken);
 

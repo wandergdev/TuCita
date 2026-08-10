@@ -1,0 +1,3 @@
+namespace TuCita.Application.Businesses.ResendBusinessVerificationEmail;
+
+public sealed record ResendBusinessVerificationEmailCommand(string Email);

@@ -7,6 +7,10 @@ using TuCita.Application.Professionals.GetAvailability;
 using TuCita.Application.Professionals.GetMyWorkingSchedule;
 using TuCita.Application.Professionals.GetProfessionalPublicProfile;
 using TuCita.Application.Professionals.LoginProfessional;
+using TuCita.Application.Professionals.Portfolio.AddPortfolioPhoto;
+using TuCita.Application.Professionals.Portfolio.CreatePortfolioUploadSignature;
+using TuCita.Application.Professionals.Portfolio.DeletePortfolioPhoto;
+using TuCita.Application.Professionals.Portfolio.GetMyPortfolio;
 using TuCita.Application.Professionals.RegisterProfessional;
 using TuCita.Application.Professionals.ResendVerificationEmail;
 using TuCita.Application.Professionals.ResetPassword;
@@ -41,7 +45,8 @@ public static class ProfessionalEndpoints
                 request.Category,
                 request.AppointmentDurationMinutes,
                 workingSchedule,
-                request.Password);
+                request.Password,
+                request.InviteToken);
 
             var response = await handler.HandleAsync(command, cancellationToken);
 
@@ -143,7 +148,7 @@ public static class ProfessionalEndpoints
 
         var meGroup = app.MapGroup("/api/professionals/me")
             .WithTags("Professionals")
-            .RequireAuthorization();
+            .RequireAuthorization("ProfessionalOnly");
 
         meGroup.MapGet("/schedule", async (
             ClaimsPrincipal user,
@@ -215,6 +220,60 @@ public static class ProfessionalEndpoints
         {
             await handler.HandleAsync(
                 new DeleteScheduleExceptionCommand(new ScheduleExceptionId(id), GetProfessionalId(user)),
+                cancellationToken);
+
+            return Results.NoContent();
+        });
+
+        meGroup.MapPost("/portfolio/upload-signature", async (
+            ClaimsPrincipal user,
+            CreatePortfolioUploadSignatureQueryHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var response = await handler.HandleAsync(
+                new CreatePortfolioUploadSignatureQuery(GetProfessionalId(user)),
+                cancellationToken);
+
+            return Results.Ok(response);
+        });
+
+        meGroup.MapPost("/portfolio", async (
+            AddPortfolioPhotoRequest request,
+            ClaimsPrincipal user,
+            AddPortfolioPhotoCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var command = new AddPortfolioPhotoCommand(
+                GetProfessionalId(user),
+                request.ImageUrl,
+                request.PublicId,
+                request.Caption);
+
+            var response = await handler.HandleAsync(command, cancellationToken);
+
+            return Results.Created($"/api/professionals/me/portfolio/{response.PortfolioPhotoId.Value}", response);
+        });
+
+        meGroup.MapGet("/portfolio", async (
+            ClaimsPrincipal user,
+            GetMyPortfolioQueryHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var response = await handler.HandleAsync(
+                new GetMyPortfolioQuery(GetProfessionalId(user)),
+                cancellationToken);
+
+            return Results.Ok(response);
+        });
+
+        meGroup.MapDelete("/portfolio/{id}", async (
+            string id,
+            ClaimsPrincipal user,
+            DeletePortfolioPhotoCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            await handler.HandleAsync(
+                new DeletePortfolioPhotoCommand(new PortfolioPhotoId(id), GetProfessionalId(user)),
                 cancellationToken);
 
             return Results.NoContent();

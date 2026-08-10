@@ -15,6 +15,8 @@ namespace TuCita.Application.UnitTests.Professionals.RegisterProfessional;
 public class RegisterProfessionalCommandHandlerTests
 {
     private readonly Mock<IProfessionalRepository> _professionalRepository = new();
+    private readonly Mock<IBusinessRepository> _businessRepository = new();
+    private readonly Mock<IBusinessInviteRepository> _businessInviteRepository = new();
     private readonly Mock<IIdentifierGenerator> _identifierGenerator = new();
     private readonly Mock<IPasswordHasher> _passwordHasher = new();
     private readonly Mock<IEmailSender> _emailSender = new();
@@ -33,6 +35,8 @@ public class RegisterProfessionalCommandHandlerTests
 
         _handler = new RegisterProfessionalCommandHandler(
             _professionalRepository.Object,
+            _businessRepository.Object,
+            _businessInviteRepository.Object,
             _identifierGenerator.Object,
             _passwordHasher.Object,
             _emailSender.Object,
@@ -113,6 +117,78 @@ public class RegisterProfessionalCommandHandlerTests
         _professionalRepository.Verify(
             r => r.AddAsync(It.IsAny<Domain.Entities.Professional>(), It.IsAny<CancellationToken>()),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_ShouldJoinBusiness_WhenInviteTokenIsValid()
+    {
+        // Arrange
+        var businessId = new BusinessId("business-001");
+        var invite = Domain.Entities.BusinessInvite.Create(
+            new BusinessInviteId("invite-001"), businessId, "valid-token", Now.AddDays(1));
+
+        _professionalRepository.Setup(r => r.ExistsBySlugAsync("wander-genao", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        _businessRepository.Setup(r => r.ExistsBySlugAsync("wander-genao", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        _businessInviteRepository.Setup(r => r.GetByTokenAsync("valid-token", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(invite);
+        _identifierGenerator.Setup(g => g.NewProfessionalId()).Returns(new ProfessionalId("professional-001"));
+        _passwordHasher.Setup(h => h.Hash(It.IsAny<string>())).Returns("hashed-password");
+
+        var command = CreateCommand() with { InviteToken = "valid-token" };
+
+        // Act
+        await _handler.HandleAsync(command);
+
+        // Assert
+        _professionalRepository.Verify(r => r.AddAsync(
+            It.Is<Domain.Entities.Professional>(p => p.BusinessId == businessId),
+            It.IsAny<CancellationToken>()), Times.Once);
+        _businessInviteRepository.Verify(r => r.UpdateAsync(
+            It.Is<Domain.Entities.BusinessInvite>(i => i.UsedAt != null),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_ShouldThrowException_WhenInviteTokenIsInvalid()
+    {
+        // Arrange
+        _professionalRepository.Setup(r => r.ExistsBySlugAsync("wander-genao", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        _businessRepository.Setup(r => r.ExistsBySlugAsync("wander-genao", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        _businessInviteRepository.Setup(r => r.GetByTokenAsync("bad-token", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Domain.Entities.BusinessInvite?)null);
+
+        var command = CreateCommand() with { InviteToken = "bad-token" };
+
+        // Act
+        var action = () => _handler.HandleAsync(command);
+
+        // Assert
+        await action.Should().ThrowAsync<ArgumentException>();
+        _professionalRepository.Verify(
+            r => r.AddAsync(It.IsAny<Domain.Entities.Professional>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleAsync_ShouldThrowException_WhenSlugAlreadyExistsAsBusiness()
+    {
+        // Arrange: el slug se comparte entre negocios y profesionales.
+        _professionalRepository.Setup(r => r.ExistsBySlugAsync("wander-genao", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        _businessRepository.Setup(r => r.ExistsBySlugAsync("wander-genao", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var action = () => _handler.HandleAsync(CreateCommand());
+
+        // Assert
+        await action.Should()
+            .ThrowAsync<InvalidOperationException>()
+            .WithMessage("*slug*");
     }
 
     [Fact]

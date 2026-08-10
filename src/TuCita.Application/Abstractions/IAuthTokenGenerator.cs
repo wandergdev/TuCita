@@ -9,4 +9,8 @@ namespace TuCita.Application.Abstractions;
 public interface IAuthTokenGenerator
 {
     string Generate(Professional professional);
+
+    string Generate(Business business);
+
+    string GenerateAdminToken(string username);
 }

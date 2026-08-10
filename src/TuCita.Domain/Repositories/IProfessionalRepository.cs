@@ -25,6 +25,15 @@ public interface IProfessionalRepository
         string token,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Profesionales activos asociados a un negocio (ej. los barberos de
+    /// una peluquería), para el roster del dueño y la página pública del
+    /// negocio.
+    /// </summary>
+    Task<IReadOnlyCollection<Professional>> GetByBusinessIdAsync(
+        BusinessId businessId,
+        CancellationToken cancellationToken = default);
+
     Task<bool> ExistsBySlugAsync(
         string slug,
         CancellationToken cancellationToken = default);
