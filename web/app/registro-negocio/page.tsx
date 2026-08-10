@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { ApiError, registerBusiness } from "@/lib/api";
 import { sanitizeSlugInput } from "@/lib/slug";
+import { SITE_DOMAIN } from "@/lib/site";
 
 export default function RegistroNegocioPage() {
   const [name, setName] = useState("");
@@ -108,7 +109,7 @@ export default function RegistroNegocioPage() {
                 htmlFor="slug"
                 hint={
                   slug
-                    ? `tucita.com/${slug}`
+                    ? `${SITE_DOMAIN}/${slug}`
                     : "Solo minúsculas, números y guiones, sin tildes ni espacios. Ejemplo: peluqueria-lisbeth"
                 }
               >

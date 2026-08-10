@@ -11,6 +11,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Badge } from "@/components/ui/Badge";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { CATEGORY_LABELS } from "@/lib/labels";
+import { SITE_DOMAIN } from "@/lib/site";
 import { clearSession, getSession } from "@/lib/auth";
 import {
   ApiError,
@@ -108,7 +109,9 @@ export default function PanelNegocioPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-foreground">{session.name}</h1>
-            <p className="mt-1 text-sm text-muted">tucita.com/{session.slug}</p>
+            <p className="mt-1 text-sm text-muted">
+              {SITE_DOMAIN}/{session.slug}
+            </p>
           </div>
           <div className="flex items-center gap-2 self-end sm:self-auto">
             <ThemeToggle />
@@ -169,7 +172,9 @@ export default function PanelNegocioPage() {
                 >
                   <div>
                     <p className="text-sm font-medium text-foreground">{professional.fullName}</p>
-                    <p className="text-sm text-muted">tucita.com/{professional.slug}</p>
+                    <p className="text-sm text-muted">
+                      {SITE_DOMAIN}/{professional.slug}
+                    </p>
                   </div>
                   <Badge className="bg-accent/10 text-accent">
                     {CATEGORY_LABELS[professional.category]}

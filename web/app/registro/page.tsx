@@ -18,6 +18,7 @@ import { toTimeOnlyString } from "@/lib/format";
 import { ApiError, getBusinessInvite, registerProfessional } from "@/lib/api";
 import { sanitizePhoneInput } from "@/lib/phone";
 import { sanitizeSlugInput } from "@/lib/slug";
+import { SITE_DOMAIN } from "@/lib/site";
 import type { Category, DayOfWeek } from "@/types/api";
 
 const DURATION_OPTIONS = [30, 45, 60, 90];
@@ -203,7 +204,7 @@ function RegistroContent() {
                 htmlFor="slug"
                 hint={
                   slug
-                    ? `tucita.com/${slug}`
+                    ? `${SITE_DOMAIN}/${slug}`
                     : "Solo minúsculas, números y guiones, sin tildes ni espacios. Ejemplo: jose-barber"
                 }
               >

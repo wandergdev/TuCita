@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { getProfessionalProfile } from "@/lib/api";
 import { CATEGORY_LABELS } from "@/lib/labels";
+import { SITE_DOMAIN } from "@/lib/site";
 import type { ProfessionalPublicProfile } from "@/types/api";
 
 interface ProfessionalHeaderProps {
@@ -52,7 +53,9 @@ export function ProfessionalHeader({ slug }: ProfessionalHeaderProps) {
         <p className="truncate text-lg font-semibold text-foreground">{profile.fullName}</p>
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <Badge className="bg-accent/10 text-accent">{CATEGORY_LABELS[profile.category]}</Badge>
-          <span className="truncate text-sm text-muted">tucita.com/{profile.slug}</span>
+          <span className="truncate text-sm text-muted">
+            {SITE_DOMAIN}/{profile.slug}
+          </span>
         </div>
       </div>
     </div>

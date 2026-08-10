@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Container } from "@/components/ui/Container";
+import { SITE_DOMAIN } from "@/lib/site";
 
 const steps = [
   {
@@ -12,7 +13,7 @@ const steps = [
   },
   {
     title: "Comparte tu enlace",
-    description: "Obtienes una URL propia, por ejemplo tucita.com/jose-barber.",
+    description: `Obtienes una URL propia, por ejemplo ${SITE_DOMAIN}/jose-barber.`,
     theme: "border-cat-aqua/25 bg-cat-aqua/8",
     dotClassName: "bg-cat-aqua",
   },
