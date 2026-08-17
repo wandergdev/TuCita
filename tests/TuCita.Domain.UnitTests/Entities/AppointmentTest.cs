@@ -166,31 +166,63 @@ public class AppointmentTests
     }
 
     [Fact]
-    public void Complete_ShouldChangeStatusToCompleted()
+    public void Complete_ShouldChangeStatusToCompleted_WhenAppointmentTimeAlreadyPassed()
     {
         // Arrange
         var appointment = AppointmentTestData.Create();
+        var now = new DateTime(2026, 7, 15, 10, 0, 0);
 
         // Act
-        appointment.Complete();
+        appointment.Complete(now);
 
         // Assert
         appointment.Status.Should().Be(AppointmentStatus.Completed);
     }
 
     [Fact]
-    public void MarkAsNoShow_ShouldChangeStatusToNoShow()
+    public void Complete_ShouldThrowException_WhenAppointmentTimeHasNotPassedYet()
     {
         // Arrange
         var appointment = AppointmentTestData.Create();
+        var now = new DateTime(2026, 7, 15, 8, 0, 0);
 
         // Act
-        appointment.MarkAsNoShow();
+        Action action = () => appointment.Complete(now);
+
+        // Assert
+        action.Should().Throw<InvalidOperationException>();
+        appointment.Status.Should().Be(AppointmentStatus.Scheduled);
+    }
+
+    [Fact]
+    public void MarkAsNoShow_ShouldChangeStatusToNoShow_WhenAppointmentTimeAlreadyPassed()
+    {
+        // Arrange
+        var appointment = AppointmentTestData.Create();
+        var now = new DateTime(2026, 7, 15, 10, 0, 0);
+
+        // Act
+        appointment.MarkAsNoShow(now);
 
         // Assert
         appointment.Status.Should().Be(AppointmentStatus.NoShow);
     }
-    
+
+    [Fact]
+    public void MarkAsNoShow_ShouldThrowException_WhenAppointmentTimeHasNotPassedYet()
+    {
+        // Arrange
+        var appointment = AppointmentTestData.Create();
+        var now = new DateTime(2026, 7, 15, 8, 0, 0);
+
+        // Act
+        Action action = () => appointment.MarkAsNoShow(now);
+
+        // Assert
+        action.Should().Throw<InvalidOperationException>();
+        appointment.Status.Should().Be(AppointmentStatus.Scheduled);
+    }
+
     [Fact]
     public void Cancel_ShouldThrowException_WhenAppointmentIsAlreadyCancelled()
     {
@@ -207,10 +239,11 @@ public class AppointmentTests
     public void Complete_ShouldThrowException_WhenAppointmentIsCancelled()
     {
         var appointment = AppointmentTestData.Create();
+        var now = new DateTime(2026, 7, 15, 10, 0, 0);
 
         appointment.Cancel();
 
-        Action action = appointment.Complete;
+        Action action = () => appointment.Complete(now);
 
         action.Should().Throw<InvalidOperationException>();
     }
@@ -219,10 +252,11 @@ public class AppointmentTests
     public void MarkAsNoShow_ShouldThrowException_WhenAppointmentIsCompleted()
     {
         var appointment = AppointmentTestData.Create();
+        var now = new DateTime(2026, 7, 15, 10, 0, 0);
 
-        appointment.Complete();
+        appointment.Complete(now);
 
-        Action action = appointment.MarkAsNoShow;
+        Action action = () => appointment.MarkAsNoShow(now);
 
         action.Should().Throw<InvalidOperationException>();
     }

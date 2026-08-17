@@ -78,25 +78,37 @@ public class Appointment
     }
 
     /// <summary>
-    /// Marca una cita como completada.
+    /// Marca una cita como completada. Solo se permite una vez que ya
+    /// pasó el horario de la cita: no tiene sentido completar (ni marcar
+    /// como No Show) algo que todavía no ha ocurrido.
     /// </summary>
-    public void Complete()
+    public void Complete(DateTime now)
     {
         if (Status != AppointmentStatus.Scheduled)
             throw new InvalidOperationException(
                 "Solo una cita programada puede completarse.");
 
+        if (Date.ToDateTime(EndTime) > now)
+            throw new InvalidOperationException(
+                "No se puede completar una cita cuyo horario todavía no ha pasado.");
+
         Status = AppointmentStatus.Completed;
     }
 
     /// <summary>
-    /// Marca una cita como ausencia del cliente.
+    /// Marca una cita como ausencia del cliente. Mismo requisito que
+    /// <see cref="Complete"/>: solo aplica una vez que ya pasó el
+    /// horario de la cita.
     /// </summary>
-    public void MarkAsNoShow()
+    public void MarkAsNoShow(DateTime now)
     {
         if (Status != AppointmentStatus.Scheduled)
             throw new InvalidOperationException(
                 "Solo una cita programada puede marcarse como No Show.");
+
+        if (Date.ToDateTime(EndTime) > now)
+            throw new InvalidOperationException(
+                "No se puede marcar como No Show una cita cuyo horario todavía no ha pasado.");
 
         Status = AppointmentStatus.NoShow;
     }

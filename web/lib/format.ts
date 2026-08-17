@@ -18,6 +18,10 @@ export function formatDateLabel(value: string): string {
   }).format(date);
 }
 
+export function hasAppointmentEnded(date: string, endTime: string): boolean {
+  return new Date(`${date}T${endTime}`) <= new Date();
+}
+
 export function todayAsDateOnly(): string {
   const now = new Date();
   const offset = now.getTimezoneOffset();

@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { STATUS_BADGE_CLASSES, STATUS_LABELS } from "@/lib/labels";
-import { formatDateLabel, formatTimeLabel } from "@/lib/format";
+import { formatDateLabel, formatTimeLabel, hasAppointmentEnded } from "@/lib/format";
 import type { AppointmentSummary } from "@/types/api";
 
 interface AppointmentCardProps {
@@ -20,6 +20,8 @@ export function AppointmentCard({
   isBusy,
 }: AppointmentCardProps) {
   const isScheduled = appointment.status === "Scheduled";
+  const hasEnded = hasAppointmentEnded(appointment.date, appointment.endTime);
+  const pendingHint = "Disponible una vez que pase la hora de la cita.";
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -38,10 +40,20 @@ export function AppointmentCard({
       </div>
       {isScheduled && (
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" disabled={isBusy} onClick={() => onComplete(appointment.id)}>
+          <Button
+            variant="outline"
+            disabled={isBusy || !hasEnded}
+            title={hasEnded ? undefined : pendingHint}
+            onClick={() => onComplete(appointment.id)}
+          >
             Completar
           </Button>
-          <Button variant="outline" disabled={isBusy} onClick={() => onNoShow(appointment.id)}>
+          <Button
+            variant="outline"
+            disabled={isBusy || !hasEnded}
+            title={hasEnded ? undefined : pendingHint}
+            onClick={() => onNoShow(appointment.id)}
+          >
             No Show
           </Button>
           <Button variant="danger" disabled={isBusy} onClick={() => onCancel(appointment.id)}>
