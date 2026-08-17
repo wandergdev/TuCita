@@ -22,6 +22,7 @@ import {
   getBusinessPhotoUploadSignature,
   getMyBusinessPhotos,
   getMyRoster,
+  removeProfessionalFromRoster,
   uploadToCloudinary,
 } from "@/lib/api";
 import type {
@@ -54,6 +55,7 @@ export default function PanelNegocioPage() {
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [isCreatingInvite, setIsCreatingInvite] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   useEffect(() => {
     const current = getSession();
@@ -64,7 +66,7 @@ export default function PanelNegocioPage() {
     setSessionState(current);
   }, [router]);
 
-  useEffect(() => {
+  const loadRoster = useCallback(() => {
     if (!session || session.accountType !== "business") return;
 
     getMyRoster(session.token)
@@ -73,6 +75,24 @@ export default function PanelNegocioPage() {
         setError(err instanceof ApiError ? err.message : "No se pudieron cargar tus profesionales."),
       );
   }, [session]);
+
+  useEffect(() => {
+    loadRoster();
+  }, [loadRoster]);
+
+  async function handleRemoveProfessional(professionalId: string) {
+    if (!session || session.accountType !== "business") return;
+    setError(null);
+    setRemovingId(professionalId);
+    try {
+      await removeProfessionalFromRoster(session.token, professionalId);
+      loadRoster();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No se pudo quitar al profesional.");
+    } finally {
+      setRemovingId(null);
+    }
+  }
 
   function handleLogout() {
     clearSession();
@@ -168,8 +188,8 @@ export default function PanelNegocioPage() {
             <div className="flex flex-col gap-3">
               {roster.map((professional) => (
                 <div
-                  key={professional.slug}
-                  className="flex items-center justify-between gap-3 rounded-md border border-border p-3"
+                  key={professional.professionalId}
+                  className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
                     <p className="text-sm font-medium text-foreground">{professional.fullName}</p>
@@ -177,9 +197,19 @@ export default function PanelNegocioPage() {
                       {SITE_DOMAIN}/{professional.slug}
                     </p>
                   </div>
-                  <Badge className="bg-accent/10 text-accent">
-                    {CATEGORY_LABELS[professional.category]}
-                  </Badge>
+                  <div className="flex items-center gap-2 self-end sm:self-auto">
+                    <Badge className="bg-accent/10 text-accent">
+                      {CATEGORY_LABELS[professional.category]}
+                    </Badge>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={removingId === professional.professionalId}
+                      onClick={() => handleRemoveProfessional(professional.professionalId)}
+                    >
+                      {removingId === professional.professionalId ? "Quitando…" : "Desvincular"}
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

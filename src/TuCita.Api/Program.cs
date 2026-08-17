@@ -39,14 +39,29 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 const string FrontendCorsPolicy = "Frontend";
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+var isDevelopment = builder.Environment.IsDevelopment();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(FrontendCorsPolicy, policy =>
     {
-        policy.WithOrigins(allowedOrigins)
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        if (isDevelopment)
+        {
+            // En local el puerto del frontend cambia según cuál esté libre
+            // (Next.js salta al siguiente si 3000 está ocupado): en vez de
+            // mantener a mano una lista de puertos permitidos, aceptamos
+            // cualquier origen localhost/127.0.0.1. En producción seguimos
+            // usando la lista explícita de abajo.
+            policy.SetIsOriginAllowed(origin =>
+                Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+                && uri.Host is "localhost" or "127.0.0.1");
+        }
+        else
+        {
+            policy.WithOrigins(allowedOrigins);
+        }
+
+        policy.AllowAnyHeader().AllowAnyMethod();
     });
 });
 

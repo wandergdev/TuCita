@@ -11,6 +11,7 @@ using TuCita.Application.Businesses.Photos.CreateBusinessPhotoUploadSignature;
 using TuCita.Application.Businesses.Photos.DeleteBusinessPhoto;
 using TuCita.Application.Businesses.Photos.GetMyBusinessPhotos;
 using TuCita.Application.Businesses.RegisterBusiness;
+using TuCita.Application.Businesses.RemoveProfessional;
 using TuCita.Application.Businesses.ResendBusinessVerificationEmail;
 using TuCita.Application.Businesses.ResetPassword;
 using TuCita.Application.Businesses.VerifyBusinessEmail;
@@ -144,6 +145,19 @@ public static class BusinessEndpoints
                 cancellationToken);
 
             return Results.Ok(response);
+        });
+
+        meGroup.MapDelete("/roster/{professionalId}", async (
+            string professionalId,
+            ClaimsPrincipal user,
+            RemoveProfessionalCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            await handler.HandleAsync(
+                new RemoveProfessionalCommand(GetBusinessId(user), new ProfessionalId(professionalId)),
+                cancellationToken);
+
+            return Results.NoContent();
         });
 
         meGroup.MapPost("/photos/upload-signature", async (

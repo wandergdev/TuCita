@@ -70,8 +70,12 @@ interface RawCreateBusinessInviteResponse {
   inviteUrl: string;
 }
 
+interface RawRosterProfessionalSummary extends Omit<RosterProfessionalSummary, "professionalId"> {
+  professionalId: RawId;
+}
+
 interface RawGetMyRosterResponse {
-  professionals: RosterProfessionalSummary[];
+  professionals: RawRosterProfessionalSummary[];
 }
 
 interface RawBookAppointmentResponse {
@@ -359,7 +363,26 @@ export async function createBusinessInvite(token: string): Promise<string> {
 
 export async function getMyRoster(token: string): Promise<RosterProfessionalSummary[]> {
   const response = await apiFetch<RawGetMyRosterResponse>("/api/businesses/me/roster", { token });
-  return response.professionals;
+  return response.professionals.map((professional) => ({
+    ...professional,
+    professionalId: professional.professionalId.value,
+  }));
+}
+
+export async function removeProfessionalFromRoster(token: string, professionalId: string): Promise<void> {
+  await apiFetch<void>(`/api/businesses/me/roster/${encodeURIComponent(professionalId)}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export async function joinBusiness(token: string, inviteToken: string): Promise<string> {
+  const response = await apiFetch<BusinessInviteInfo>("/api/professionals/me/join-business", {
+    method: "POST",
+    body: { inviteToken },
+    token,
+  });
+  return response.businessName;
 }
 
 export async function getBusinessPhotoUploadSignature(token: string): Promise<PortfolioUploadSignature> {

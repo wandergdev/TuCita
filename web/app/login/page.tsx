@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { Container } from "@/components/ui/Container";
@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import {
   ApiError,
+  getBusinessInvite,
+  joinBusiness,
   loginBusiness,
   loginProfessional,
   resendBusinessVerificationEmail,
@@ -22,8 +24,19 @@ import { setSession } from "@/lib/auth";
 
 type PendingAccountKind = "professional" | "business";
 
-export default function LoginPage() {
+interface JoinOutcome {
+  success: boolean;
+  message: string;
+}
+
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get("invite");
+
+  const [businessName, setBusinessName] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +44,29 @@ export default function LoginPage() {
   const [pendingVerification, setPendingVerification] = useState<PendingAccountKind | null>(null);
   const [isResending, setIsResending] = useState(false);
   const [resendSent, setResendSent] = useState(false);
+  const [joinOutcome, setJoinOutcome] = useState<JoinOutcome | null>(null);
+
+  useEffect(() => {
+    if (!inviteToken) return;
+
+    let cancelled = false;
+
+    getBusinessInvite(inviteToken)
+      .then((info) => {
+        if (!cancelled) setBusinessName(info.businessName);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setInviteError(
+            err instanceof ApiError ? err.message : "El enlace de invitación no es válido.",
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [inviteToken]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -46,6 +82,24 @@ export default function LoginPage() {
     try {
       const session = await loginProfessional({ email, password });
       setSession(session);
+
+      if (inviteToken) {
+        try {
+          const joinedBusinessName = await joinBusiness(session.token, inviteToken);
+          setJoinOutcome({ success: true, message: `Te uniste a ${joinedBusinessName}.` });
+        } catch (joinError) {
+          setJoinOutcome({
+            success: false,
+            message:
+              joinError instanceof ApiError
+                ? joinError.message
+                : "No se pudo completar la unión al negocio.",
+          });
+        }
+        setIsSubmitting(false);
+        return;
+      }
+
       router.push("/panel");
       return;
     } catch (professionalError) {
@@ -85,6 +139,27 @@ export default function LoginPage() {
     }
   }
 
+  if (joinOutcome) {
+    return (
+      <>
+        <SiteHeader />
+        <main className="flex flex-1 items-center justify-center py-12">
+          <Container className="max-w-md">
+            <h1 className="text-2xl font-semibold text-foreground">
+              {joinOutcome.success ? "¡Listo!" : "No se pudo unir al negocio"}
+            </h1>
+            <Card className="mt-6">
+              <Alert tone={joinOutcome.success ? "success" : "error"}>{joinOutcome.message}</Alert>
+              <Button className="mt-4" onClick={() => router.push("/panel")}>
+                Continuar a mi panel
+              </Button>
+            </Card>
+          </Container>
+        </main>
+      </>
+    );
+  }
+
   return (
     <>
       <SiteHeader />
@@ -94,6 +169,17 @@ export default function LoginPage() {
           <p className="mt-1 text-sm text-muted">
             Entra a tu panel, ya seas profesional o dueño de un negocio.
           </p>
+
+          {inviteToken && businessName && (
+            <Alert tone="success" className="mt-4">
+              Inicia sesión para unirte a <strong>{businessName}</strong>.
+            </Alert>
+          )}
+          {inviteToken && inviteError && (
+            <Alert tone="error" className="mt-4">
+              {inviteError}
+            </Alert>
+          )}
 
           <Card className="mt-6">
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -151,16 +237,24 @@ export default function LoginPage() {
 
               <p className="text-center text-sm text-muted">
                 ¿No tienes cuenta?{" "}
-                <Link href="/registro" className="font-medium text-accent hover:text-accent-hover">
-                  Regístrate como profesional
-                </Link>{" "}
-                o{" "}
                 <Link
-                  href="/registro-negocio"
+                  href={inviteToken ? `/registro?invite=${encodeURIComponent(inviteToken)}` : "/registro"}
                   className="font-medium text-accent hover:text-accent-hover"
                 >
-                  registra tu negocio
+                  Regístrate como profesional
                 </Link>
+                {!inviteToken && (
+                  <>
+                    {" "}
+                    o{" "}
+                    <Link
+                      href="/registro-negocio"
+                      className="font-medium text-accent hover:text-accent-hover"
+                    >
+                      registra tu negocio
+                    </Link>
+                  </>
+                )}
                 .
               </p>
             </form>
@@ -168,5 +262,13 @@ export default function LoginPage() {
         </Container>
       </main>
     </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginContent />
+    </Suspense>
   );
 }

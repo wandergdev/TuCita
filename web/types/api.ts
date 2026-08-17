@@ -49,6 +49,7 @@ export interface LoginBusinessRequest {
 }
 
 export interface RosterProfessionalSummary {
+  professionalId: string;
   fullName: string;
   slug: string;
   category: Category;

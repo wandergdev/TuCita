@@ -6,6 +6,7 @@ using TuCita.Application.Professionals.ForgotPassword;
 using TuCita.Application.Professionals.GetAvailability;
 using TuCita.Application.Professionals.GetMyWorkingSchedule;
 using TuCita.Application.Professionals.GetProfessionalPublicProfile;
+using TuCita.Application.Professionals.JoinBusiness;
 using TuCita.Application.Professionals.LoginProfessional;
 using TuCita.Application.Professionals.Portfolio.AddPortfolioPhoto;
 using TuCita.Application.Professionals.Portfolio.CreatePortfolioUploadSignature;
@@ -277,6 +278,19 @@ public static class ProfessionalEndpoints
                 cancellationToken);
 
             return Results.NoContent();
+        });
+
+        meGroup.MapPost("/join-business", async (
+            JoinBusinessRequest request,
+            ClaimsPrincipal user,
+            JoinBusinessCommandHandler handler,
+            CancellationToken cancellationToken) =>
+        {
+            var response = await handler.HandleAsync(
+                new JoinBusinessCommand(GetProfessionalId(user), request.InviteToken),
+                cancellationToken);
+
+            return Results.Ok(response);
         });
 
         meGroup.MapPost("/change-password", async (

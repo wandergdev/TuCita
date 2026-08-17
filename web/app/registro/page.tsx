@@ -287,8 +287,11 @@ function RegistroContent() {
 
               <p className="text-center text-sm text-muted">
                 ¿Ya tienes cuenta?{" "}
-                <Link href="/login" className="font-medium text-accent hover:text-accent-hover">
-                  Inicia sesión
+                <Link
+                  href={inviteToken ? `/login?invite=${encodeURIComponent(inviteToken)}` : "/login"}
+                  className="font-medium text-accent hover:text-accent-hover"
+                >
+                  {inviteToken ? "Inicia sesión para unirte" : "Inicia sesión"}
                 </Link>
               </p>
             </form>

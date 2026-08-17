@@ -262,4 +262,31 @@ public class ProfessionalTests
         // Assert
         action.Should().Throw<InvalidOperationException>();
     }
+
+    [Fact]
+    public void LeaveBusiness_ShouldClearBusinessId()
+    {
+        // Arrange
+        var professional = ProfessionalTestData.Create();
+        professional.JoinBusiness(new BusinessId("business-001"));
+
+        // Act
+        professional.LeaveBusiness();
+
+        // Assert
+        professional.BusinessId.Should().BeNull();
+    }
+
+    [Fact]
+    public void LeaveBusiness_ShouldThrowException_WhenNotInABusiness()
+    {
+        // Arrange
+        var professional = ProfessionalTestData.Create();
+
+        // Act
+        Action action = () => professional.LeaveBusiness();
+
+        // Assert
+        action.Should().Throw<InvalidOperationException>();
+    }
 }

@@ -227,4 +227,17 @@ public sealed class Professional : Entity<ProfessionalId>
 
         BusinessId = businessId;
     }
+
+    /// <summary>
+    /// Desvincula al profesional del negocio al que pertenece (ej. el
+    /// negocio lo remueve de su equipo). Su cuenta y su página pública
+    /// siguen funcionando de forma independiente.
+    /// </summary>
+    public void LeaveBusiness()
+    {
+        if (BusinessId is null)
+            throw new InvalidOperationException("El profesional no pertenece a ningún negocio.");
+
+        BusinessId = null;
+    }
 }

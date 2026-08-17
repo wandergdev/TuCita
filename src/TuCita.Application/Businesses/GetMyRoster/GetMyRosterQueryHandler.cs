@@ -26,7 +26,7 @@ public sealed class GetMyRosterQueryHandler
             cancellationToken);
 
         var summaries = professionals
-            .Select(p => new RosterProfessionalSummary(p.FullName, p.Slug.Value, p.Category))
+            .Select(p => new RosterProfessionalSummary(p.Id, p.FullName, p.Slug.Value, p.Category))
             .ToList();
 
         return new GetMyRosterResponse(summaries);
