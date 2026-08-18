@@ -72,14 +72,17 @@ public sealed class SendDueRemindersCommandHandler
                 if (professional is null)
                     continue;
 
-                var message =
-                    $"Hola {appointment.CustomerName}, te recordamos tu cita con " +
-                    $"{professional.FullName} hoy a las {SpanishFormat.Time(appointment.StartTime)}. " +
-                    "¡Te esperamos!";
+                var parameters = WhatsAppTemplates.AppointmentReminderParameters(
+                    appointment.CustomerName,
+                    professional.FullName,
+                    appointment.StartTime,
+                    professional.PhoneNumber.Value);
 
-                await _whatsAppSender.SendTextMessageAsync(
+                await _whatsAppSender.SendTemplateMessageAsync(
                     appointment.CustomerPhone.Value,
-                    message,
+                    WhatsAppTemplates.AppointmentReminderName,
+                    WhatsAppTemplates.LanguageCode,
+                    parameters,
                     cancellationToken);
 
                 appointment.MarkReminderSent(now);

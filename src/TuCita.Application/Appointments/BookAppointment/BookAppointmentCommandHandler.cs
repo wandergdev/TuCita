@@ -165,7 +165,7 @@ public sealed class BookAppointmentCommandHandler
     {
         try
         {
-            var message = WhatsAppTemplates.NewAppointmentNotification(
+            var parameters = WhatsAppTemplates.NewAppointmentNotificationParameters(
                 appointment.CustomerName,
                 appointment.CustomerPhone.Value,
                 appointment.Date,
@@ -174,9 +174,11 @@ public sealed class BookAppointmentCommandHandler
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutCts.CancelAfter(TimeSpan.FromSeconds(8));
 
-            await _whatsAppSender.SendTextMessageAsync(
+            await _whatsAppSender.SendTemplateMessageAsync(
                 professional.PhoneNumber.Value,
-                message,
+                WhatsAppTemplates.NewAppointmentNotificationName,
+                WhatsAppTemplates.LanguageCode,
+                parameters,
                 timeoutCts.Token);
         }
         catch (Exception ex)

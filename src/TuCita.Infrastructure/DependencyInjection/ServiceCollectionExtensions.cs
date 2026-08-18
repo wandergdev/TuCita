@@ -31,9 +31,6 @@ public static class ServiceCollectionExtensions
         services.AddOptions<FrontendOptions>()
             .Bind(configuration.GetSection(FrontendOptions.SectionName));
 
-        services.AddOptions<TwilioOptions>()
-            .Bind(configuration.GetSection(TwilioOptions.SectionName));
-
         services.AddOptions<MetaWhatsAppOptions>()
             .Bind(configuration.GetSection(MetaWhatsAppOptions.SectionName));
 
@@ -65,7 +62,10 @@ public static class ServiceCollectionExtensions
         {
             client.BaseAddress = new Uri("https://api.brevo.com/v3/");
         });
-        services.AddScoped<IWhatsAppSender, TwilioWhatsAppSender>();
+        services.AddHttpClient<IWhatsAppSender, MetaWhatsAppSender>(client =>
+        {
+            client.BaseAddress = new Uri("https://graph.facebook.com/");
+        });
 
         services.AddHostedService<AppointmentReminderBackgroundService>();
 

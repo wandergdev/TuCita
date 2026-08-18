@@ -71,8 +71,12 @@ public class SendDueRemindersCommandHandlerTests
         await _handler.HandleAsync();
 
         // Assert
-        _whatsAppSender.Verify(w => w.SendTextMessageAsync(
-            "8095551234", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _whatsAppSender.Verify(w => w.SendTemplateMessageAsync(
+            "8095551234",
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<IReadOnlyList<string>>(),
+            It.IsAny<CancellationToken>()), Times.Once);
         appointment.ReminderSentAt.Should().Be(Now);
         _appointmentRepository.Verify(r => r.UpdateAsync(appointment, It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -88,8 +92,12 @@ public class SendDueRemindersCommandHandlerTests
         await _handler.HandleAsync();
 
         // Assert
-        _whatsAppSender.Verify(w => w.SendTextMessageAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _whatsAppSender.Verify(w => w.SendTemplateMessageAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<IReadOnlyList<string>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
         _appointmentRepository.Verify(r => r.UpdateAsync(It.IsAny<Appointment>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -106,8 +114,12 @@ public class SendDueRemindersCommandHandlerTests
         await _handler.HandleAsync();
 
         // Assert
-        _whatsAppSender.Verify(w => w.SendTextMessageAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _whatsAppSender.Verify(w => w.SendTemplateMessageAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<IReadOnlyList<string>>(),
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -123,12 +135,17 @@ public class SendDueRemindersCommandHandlerTests
 
         var callCount = 0;
         _whatsAppSender
-            .Setup(w => w.SendTextMessageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(w => w.SendTemplateMessageAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<IReadOnlyList<string>>(),
+                It.IsAny<CancellationToken>()))
             .Returns(() =>
             {
                 callCount++;
                 return callCount == 1
-                    ? throw new InvalidOperationException("Twilio no disponible")
+                    ? throw new InvalidOperationException("Meta WhatsApp no disponible")
                     : Task.CompletedTask;
             });
 
@@ -138,7 +155,11 @@ public class SendDueRemindersCommandHandlerTests
         // Assert: una de las dos citas quedó marcada, la otra no; se intentó con ambas.
         var markedCount = new[] { failing, succeeding }.Count(a => a.ReminderSentAt.HasValue);
         markedCount.Should().Be(1);
-        _whatsAppSender.Verify(w => w.SendTextMessageAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+        _whatsAppSender.Verify(w => w.SendTemplateMessageAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<IReadOnlyList<string>>(),
+            It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 }

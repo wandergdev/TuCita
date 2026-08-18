@@ -26,4 +26,10 @@ public sealed class MetaWhatsAppOptions
     public string VerifyToken { get; init; } = "";
 
     public string ApiVersion { get; init; } = "v21.0";
+
+    /// <summary>
+    /// Código de país anteponer a los teléfonos guardados sin él, ya que
+    /// la Graph API exige el número completo (sin "+").
+    /// </summary>
+    public string DefaultCountryCode { get; init; } = "1";
 }

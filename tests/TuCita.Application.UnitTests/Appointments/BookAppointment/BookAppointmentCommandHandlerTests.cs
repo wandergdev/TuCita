@@ -189,8 +189,13 @@ public class BookAppointmentCommandHandlerTests
             .ReturnsAsync((IReadOnlyCollection<Appointment>)[]);
         _identifierGenerator.Setup(g => g.NewAppointmentId()).Returns(appointmentId);
         _whatsAppSender
-            .Setup(w => w.SendTextMessageAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Twilio no disponible"));
+            .Setup(w => w.SendTemplateMessageAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<IReadOnlyList<string>>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Meta WhatsApp no disponible"));
 
         // Act
         var response = await _handler.HandleAsync(CreateCommand(new TimeOnly(9, 0)));
@@ -304,7 +309,11 @@ public class BookAppointmentCommandHandlerTests
         await _handler.HandleAsync(CreateCommand(new TimeOnly(9, 0)));
 
         // Assert
-        _whatsAppSender.Verify(w => w.SendTextMessageAsync(
-            professional.PhoneNumber.Value, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _whatsAppSender.Verify(w => w.SendTemplateMessageAsync(
+            professional.PhoneNumber.Value,
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<IReadOnlyList<string>>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 }
