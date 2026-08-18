@@ -121,5 +121,6 @@ app.MapProfessionalEndpoints();
 app.MapAppointmentEndpoints();
 app.MapBusinessEndpoints();
 app.MapAdminEndpoints();
+app.MapWhatsAppWebhookEndpoints();
 
 app.Run();

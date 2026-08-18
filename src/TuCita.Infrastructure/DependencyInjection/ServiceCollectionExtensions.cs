@@ -34,6 +34,9 @@ public static class ServiceCollectionExtensions
         services.AddOptions<TwilioOptions>()
             .Bind(configuration.GetSection(TwilioOptions.SectionName));
 
+        services.AddOptions<MetaWhatsAppOptions>()
+            .Bind(configuration.GetSection(MetaWhatsAppOptions.SectionName));
+
         services.AddOptions<ReminderOptions>()
             .Bind(configuration.GetSection(ReminderOptions.SectionName));
 
