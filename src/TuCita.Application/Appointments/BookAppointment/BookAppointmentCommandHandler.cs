@@ -169,7 +169,8 @@ public sealed class BookAppointmentCommandHandler
                 appointment.CustomerName,
                 appointment.CustomerPhone.Value,
                 appointment.Date,
-                appointment.StartTime);
+                appointment.StartTime,
+                professional.FullName);
 
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutCts.CancelAfter(TimeSpan.FromSeconds(8));

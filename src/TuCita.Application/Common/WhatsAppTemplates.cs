@@ -17,14 +17,15 @@ public static class WhatsAppTemplates
 
     /// <summary>
     /// Aviso al profesional cuando un cliente reserva una cita nueva.
-    /// Plantilla: "Tienes una nueva cita en TuCita. Cliente: {{1}}
-    /// Teléfono: {{2}} Fecha: {{3}} Hora: {{4}}".
+    /// Plantilla: "Hola {{5}}, tienes una nueva cita agendada. Cliente:
+    /// {{1}} Teléfono: {{2}} Fecha: {{3}} Hora: {{4}}".
     /// </summary>
     public static IReadOnlyList<string> NewAppointmentNotificationParameters(
         string customerName,
         string customerPhone,
         DateOnly date,
-        TimeOnly startTime)
+        TimeOnly startTime,
+        string professionalFullName)
     {
         return
         [
@@ -32,6 +33,7 @@ public static class WhatsAppTemplates
             customerPhone,
             SpanishFormat.Date(date),
             SpanishFormat.Time(startTime),
+            professionalFullName,
         ];
     }
 
